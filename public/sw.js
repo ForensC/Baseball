@@ -1,4 +1,4 @@
-const CACHE = 'yakyu-techo-v1';
+const CACHE = 'yakyu-techo-v2';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

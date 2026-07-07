@@ -28,7 +28,10 @@ export default function App() {
   const [records, setRecords] = useStoredState<AttendanceRecord[]>('records', []);
   const [items, setItems] = useStoredState<CollectionItem[]>('collection', []);
   const [favTeam, setFavTeam] = useStoredState<string>('favTeam', '');
-  const [themeSheet, setThemeSheet] = useStoredState<string>('themeSheet', DEFAULT_THEME_SHEET);
+  const [themeSheet, setThemeSheet] = useStoredState<string>('themeSheet', '');
+  // 使用者沒自訂（空值）時，退回網站內建的預設主題日來源。
+  // 不能只靠 useStoredState 的預設值，否則既有裝置存過的空值會蓋掉它。
+  const effectiveSheet = themeSheet.trim() || DEFAULT_THEME_SHEET;
   const [themeDays, setThemeDays] = useState<ThemeDay[]>([]);
   const [themeStatus, setThemeStatus] = useState<{ status: 'idle' | 'loading' | 'ok' | 'error'; message: string }>({ status: 'idle', message: '' });
   const [draft, setDraft] = useState<RecordDraft | null>(null);
@@ -40,20 +43,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!themeSheet) {
-      setThemeDays([]);
-      setThemeStatus({ status: 'idle', message: '' });
-      return;
-    }
     let cancelled = false;
     setThemeStatus({ status: 'loading', message: '載入主題日中…' });
-    fetchThemeDays(themeSheet).then((r) => {
+    fetchThemeDays(effectiveSheet).then((r) => {
       if (cancelled) return;
       setThemeDays(r.days);
       setThemeStatus({ status: r.status, message: r.message });
     });
     return () => { cancelled = true; };
-  }, [themeSheet]);
+  }, [effectiveSheet]);
 
   const games = schedule?.games ?? [];
   const gamesById = useMemo(() => new Map(games.map((g) => [g.id, g])), [games]);

@@ -139,11 +139,11 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
       <div className="card">
         <h2>主題日 Google Sheet</h2>
         <div className="field">
-          <label>貼上你的 Google Sheet 連結或 ID（需設為「知道連結的任何人可檢視」）</label>
+          <label>貼上你的 Google Sheet 連結或 ID（留空＝使用網站內建的預設主題日）</label>
           <input
             value={themeSheet}
             onChange={(e) => onThemeSheet(e.target.value)}
-            placeholder="https://docs.google.com/spreadsheets/d/..."
+            placeholder="留空使用預設，或貼上 https://docs.google.com/spreadsheets/d/..."
           />
         </div>
         {themeStatus.status !== 'idle' && (

@@ -87,6 +87,30 @@ body {
   margin: 10px 0;
 }
 .card h2 { font-size: 15px; margin: 0 0 10px; }
+
+.card-head { display: flex; align-items: center; margin-bottom: 10px; }
+.card-head h2 { margin: 0; }
+.link-more {
+  margin-left: auto;
+  border: 0; background: none;
+  color: var(--accent);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+}
+
+.home-hi { padding: 8px 2px 2px; }
+.home-date { font-size: 13px; color: var(--muted); }
+.home-greet { font-size: 20px; font-weight: 800; margin-top: 2px; }
+.focus-count {
+  font-size: 15px; font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.theme-row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
+.theme-row:first-of-type { border-top: 0; }
+.theme-date { color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.theme-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .section-note { color: var(--muted); font-size: 12px; margin: 4px 2px; }
 
 .chip-row { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px; scrollbar-width: none; }

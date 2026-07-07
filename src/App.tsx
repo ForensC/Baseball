@@ -2,19 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import type { AttendanceRecord, CollectionItem, Game, NewsData, ScheduleData, ThemeDay } from './types';
 import { useStoredState } from './store';
 import { fetchThemeDays } from './themedays';
+import HomeView from './views/HomeView';
 import CalendarView from './views/CalendarView';
 import RecordsView from './views/RecordsView';
 import CollectionView from './views/CollectionView';
 import NewsView from './views/NewsView';
 import RecordModal, { RecordDraft } from './components/RecordModal';
 
-type Tab = 'calendar' | 'records' | 'collection' | 'news';
+type Tab = 'home' | 'calendar' | 'records' | 'collection' | 'news';
 
 // 網站預設主題日來源（作者維護的公開 Google Sheet）。
 // 使用者可在「進場」分頁的設定欄位貼上自己的 Sheet 覆蓋。
 const DEFAULT_THEME_SHEET = '1KQtXauU4aeBhEADD781CA7hBLyC3F9Aj108X8Ve4TyY';
 
 const TABS: { id: Tab; label: string; ico: string }[] = [
+  { id: 'home', label: '首頁', ico: '🏠' },
   { id: 'calendar', label: '賽程', ico: '📅' },
   { id: 'records', label: '進場', ico: '🎟️' },
   { id: 'collection', label: '收藏', ico: '🧢' },
@@ -22,7 +24,7 @@ const TABS: { id: Tab; label: string; ico: string }[] = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('calendar');
+  const [tab, setTab] = useState<Tab>('home');
   const [schedule, setSchedule] = useState<ScheduleData | null>(null);
   const [news, setNews] = useState<NewsData | null>(null);
   const [records, setRecords] = useStoredState<AttendanceRecord[]>('records', []);
@@ -83,6 +85,19 @@ export default function App() {
         <span className="sub">CPBL 追賽紀錄</span>
       </header>
 
+      {tab === 'home' && (
+        <HomeView
+          games={games}
+          gamesById={gamesById}
+          themeDays={themeDays}
+          records={records}
+          items={items}
+          favTeam={favTeam}
+          news={news}
+          onQuickAdd={quickAddFromGame}
+          onNavigate={setTab}
+        />
+      )}
       {tab === 'calendar' && (
         <CalendarView
           games={games}

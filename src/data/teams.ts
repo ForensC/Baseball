@@ -18,15 +18,25 @@ export const TEAMS: Team[] = [
 
 const byCode = new Map(TEAMS.map((t) => [t.code, t]));
 
+// 球隊代碼前三碼代表「品牌」（同隊一二軍相同）：一軍 XXX011、二軍 XXX022。
+export function brandOf(code: string): string {
+  return code.slice(0, 3);
+}
+
+const byBrand = new Map(TEAMS.map((t) => [brandOf(t.code), t]));
+
 export function team(code: string): Team {
-  return (
-    byCode.get(code) ?? {
-      code,
-      name: code,
-      short: code.slice(0, 2),
-      color: '#64748b',
-      text: '#ffffff',
-      site: 'https://www.cpbl.com.tw',
-    }
-  );
+  const exact = byCode.get(code);
+  if (exact) return exact;
+  // 二軍等其他代碼：沿用同品牌母隊的顏色與簡稱
+  const brand = byBrand.get(brandOf(code));
+  if (brand) return { ...brand, code };
+  return {
+    code,
+    name: code,
+    short: code.slice(0, 2),
+    color: '#64748b',
+    text: '#ffffff',
+    site: 'https://www.cpbl.com.tw',
+  };
 }

@@ -48,32 +48,38 @@ async function request(url, options = {}, tries = 4) {
   }
 }
 
+// A=一軍例行賽、D=二軍例行賽
+const KIND_CODES = ['A', 'D'];
+
 async function fetchSchedule(year) {
   const page = await request('https://www.cpbl.com.tw/schedule');
   const html = await page.text();
   const tokenMatch = html.match(/RequestVerificationToken:\s*'([^']+)'/);
   if (!tokenMatch) throw new Error('找不到驗證 token，官網版面可能改版了');
 
-  const res = await request('https://www.cpbl.com.tw/schedule/getgamedatas', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      Referer: 'https://www.cpbl.com.tw/schedule',
-      RequestVerificationToken: tokenMatch[1],
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    body: new URLSearchParams({ kindCode: 'A', year: String(year), month: '1' }).toString(),
-  });
-  const payload = await res.json();
-  if (!payload.Success) throw new Error('getgamedatas 回傳失敗');
-  const raw = JSON.parse(payload.GameDatas);
+  const codes = new Map();
+  const allGames = [];
 
-  const games = raw
-    .filter((g) => g.GameDate)
-    .map((g) => {
+  for (const kindCode of KIND_CODES) {
+    const res = await request('https://www.cpbl.com.tw/schedule/getgamedatas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        Referer: 'https://www.cpbl.com.tw/schedule',
+        RequestVerificationToken: tokenMatch[1],
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: new URLSearchParams({ kindCode, year: String(year), month: '1' }).toString(),
+    });
+    const payload = await res.json();
+    if (!payload.Success) throw new Error(`getgamedatas(${kindCode}) 回傳失敗`);
+    const raw = JSON.parse(payload.GameDatas);
+
+    for (const g of raw) {
+      if (!g.GameDate) continue;
       const postponed = g.IsGameStop && g.IsGameStop !== '0';
       const finished = !postponed && g.GameDateTimeE != null;
-      return {
+      allGames.push({
         id: `${g.Year}-${g.KindCode}-${g.GameSno}`,
         date: g.GameDate.slice(0, 10),
         time: g.PreExeDate ? g.PreExeDate.slice(11, 16) : '',
@@ -85,24 +91,24 @@ async function fetchSchedule(year) {
         awayScore: finished ? g.VisitingScore ?? null : null,
         homeScore: finished ? g.HomeScore ?? null : null,
         status: postponed ? 'postponed' : finished ? 'final' : 'scheduled',
-      };
-    })
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-
-  // 團隊代碼摘要，方便核對 teams.ts
-  const codes = new Map();
-  for (const g of raw) {
-    codes.set(g.HomeTeamCode, g.HomeTeamName);
-    codes.set(g.VisitingTeamCode, g.VisitingTeamName);
+      });
+      codes.set(g.HomeTeamCode, g.HomeTeamName);
+      codes.set(g.VisitingTeamCode, g.VisitingTeamName);
+    }
+    const n = raw.filter((g) => g.GameDate).length;
+    console.log(`kindCode=${kindCode}：${n} 場`);
   }
+
+  allGames.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
   console.log('球隊代碼：', Object.fromEntries(codes));
-  console.log(`賽程：共 ${games.length} 場（已完賽 ${games.filter((g) => g.status === 'final').length}、延賽 ${games.filter((g) => g.status === 'postponed').length}）`);
+  console.log(`賽程合計：${allGames.length} 場（一軍 ${allGames.filter((g) => g.kindCode === 'A').length}、二軍 ${allGames.filter((g) => g.kindCode === 'D').length}）`);
 
   return {
     updatedAt: new Date().toISOString(),
     year,
     source: 'https://www.cpbl.com.tw/schedule',
-    games,
+    games: allGames,
   };
 }
 

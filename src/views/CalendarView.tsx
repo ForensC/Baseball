@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { AttendanceRecord, Game, ThemeDay } from '../types';
-import { TEAMS, team } from '../data/teams';
+import { TEAMS, team, brandOf } from '../data/teams';
 import { todayISO } from '../utils';
 import TeamBadge from '../components/TeamBadge';
 
@@ -20,21 +20,27 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
   const [ym, setYm] = useState(today.slice(0, 7));
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState('');
+  const [tier, setTier] = useState<'A' | 'D'>('A'); // A=一軍、D=二軍
 
+  // 主題日僅屬一軍賽事，二軍檢視時不顯示
   const themeByDate = useMemo(() => {
     const m = new Map<string, ThemeDay[]>();
+    if (tier !== 'A') return m;
     for (const t of themeDays) {
-      if (filter && t.team && t.team !== filter) continue;
+      if (filter && t.team && brandOf(t.team) !== brandOf(filter)) continue;
       const arr = m.get(t.date) ?? [];
       arr.push(t);
       m.set(t.date, arr);
     }
     return m;
-  }, [themeDays, filter]);
+  }, [themeDays, filter, tier]);
 
   const filtered = useMemo(
-    () => (filter ? games.filter((g) => g.home === filter || g.away === filter) : games),
-    [games, filter]
+    () => games.filter((g) =>
+      g.kindCode === tier &&
+      (!filter || brandOf(g.home) === brandOf(filter) || brandOf(g.away) === brandOf(filter))
+    ),
+    [games, filter, tier]
   );
   const byDate = useMemo(() => {
     const m = new Map<string, Game[]>();
@@ -62,6 +68,11 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
 
   return (
     <>
+      <div className="tier-toggle">
+        <button className={tier === 'A' ? 'active' : ''} onClick={() => setTier('A')}>一軍</button>
+        <button className={tier === 'D' ? 'active' : ''} onClick={() => setTier('D')}>二軍</button>
+      </div>
+
       <div className="chip-row">
         <button
           className={`chip ${filter === '' ? 'active' : ''}`}

@@ -59,19 +59,21 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
   const collectionTotal = useMemo(() => items.reduce((s, i) => s + (i.price || 0), 0), [items]);
   const grandTotal = stats.ticketTotal + collectionTotal;
 
-  const todayGames = useMemo(() => games.filter((g) => g.date === today), [games, today]);
+  // 主頁只呈現一軍（kindCode A）；二軍在賽程分頁切換檢視
+  const firstTeam = useMemo(() => games.filter((g) => g.kindCode === 'A'), [games]);
+  const todayGames = useMemo(() => firstTeam.filter((g) => g.date === today), [firstTeam, today]);
   const nextGameDate = useMemo(() => {
     if (todayGames.length) return today;
-    return games.filter((g) => g.date > today).map((g) => g.date).sort()[0] ?? '';
-  }, [games, today, todayGames]);
-  const showGames = todayGames.length ? todayGames : games.filter((g) => g.date === nextGameDate);
+    return firstTeam.filter((g) => g.date > today).map((g) => g.date).sort()[0] ?? '';
+  }, [firstTeam, today, todayGames]);
+  const showGames = todayGames.length ? todayGames : firstTeam.filter((g) => g.date === nextGameDate);
 
   const favNext = useMemo(() => {
     if (!favTeam) return undefined;
-    return games
+    return firstTeam
       .filter((g) => g.date >= today && g.status === 'scheduled' && (g.home === favTeam || g.away === favTeam))
       .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
-  }, [games, favTeam, today]);
+  }, [firstTeam, favTeam, today]);
   const favDays = favNext ? daysBetween(today, favNext.date) : null;
   const favTheme = favNext
     ? themeDays.find((t) => t.date === favNext.date && (t.team === favNext.home || t.team === favNext.away))

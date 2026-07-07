@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AttendanceRecord, CollectionItem, Game, NewsData, ScheduleData } from './types';
+import type { AttendanceRecord, CollectionItem, Game, NewsData, ScheduleData, ThemeDay } from './types';
 import { useStoredState } from './store';
+import { fetchThemeDays } from './themedays';
 import CalendarView from './views/CalendarView';
 import RecordsView from './views/RecordsView';
 import CollectionView from './views/CollectionView';
@@ -23,6 +24,9 @@ export default function App() {
   const [records, setRecords] = useStoredState<AttendanceRecord[]>('records', []);
   const [items, setItems] = useStoredState<CollectionItem[]>('collection', []);
   const [favTeam, setFavTeam] = useStoredState<string>('favTeam', '');
+  const [themeSheet, setThemeSheet] = useStoredState<string>('themeSheet', '');
+  const [themeDays, setThemeDays] = useState<ThemeDay[]>([]);
+  const [themeStatus, setThemeStatus] = useState<{ status: 'idle' | 'loading' | 'ok' | 'error'; message: string }>({ status: 'idle', message: '' });
   const [draft, setDraft] = useState<RecordDraft | null>(null);
 
   useEffect(() => {
@@ -30,6 +34,22 @@ export default function App() {
     fetch(`${base}data/schedule.json`).then((r) => r.json()).then(setSchedule).catch(() => {});
     fetch(`${base}data/news.json`).then((r) => r.json()).then(setNews).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!themeSheet) {
+      setThemeDays([]);
+      setThemeStatus({ status: 'idle', message: '' });
+      return;
+    }
+    let cancelled = false;
+    setThemeStatus({ status: 'loading', message: '載入主題日中…' });
+    fetchThemeDays(themeSheet).then((r) => {
+      if (cancelled) return;
+      setThemeDays(r.days);
+      setThemeStatus({ status: r.status, message: r.message });
+    });
+    return () => { cancelled = true; };
+  }, [themeSheet]);
 
   const games = schedule?.games ?? [];
   const gamesById = useMemo(() => new Map(games.map((g) => [g.id, g])), [games]);
@@ -66,6 +86,7 @@ export default function App() {
           games={games}
           records={records}
           favTeam={favTeam}
+          themeDays={themeDays}
           onQuickAdd={quickAddFromGame}
           updatedAt={schedule?.updatedAt}
         />
@@ -79,6 +100,9 @@ export default function App() {
           onAdd={() => setDraft({ myTeam: favTeam })}
           onEdit={(r) => setDraft({ editing: r })}
           onDelete={(id) => setRecords((prev) => prev.filter((r) => r.id !== id))}
+          themeSheet={themeSheet}
+          onThemeSheet={setThemeSheet}
+          themeStatus={themeStatus}
         />
       )}
       {tab === 'collection' && (

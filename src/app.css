@@ -136,6 +136,28 @@ body {
   position: absolute; top: 2px; right: 3px;
   font-size: 9px;
 }
+.cal-cell .theme-dot {
+  position: absolute; top: 4px; left: 4px;
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+.theme-banner {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 0;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.theme-banner a { color: var(--text); text-decoration: none; }
+.theme-banner a:active { opacity: 0.6; }
+.theme-tag {
+  flex-shrink: 0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px; font-weight: 700;
+}
 
 .game-item { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--line); }
 .game-item:first-of-type { border-top: 0; }

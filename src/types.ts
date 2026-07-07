@@ -33,6 +33,13 @@ export interface NewsData {
   items: NewsItem[];
 }
 
+export interface ThemeDay {
+  date: string; // YYYY-MM-DD
+  team: string; // 球隊代碼；無法對應時為空字串
+  name: string;
+  url?: string;
+}
+
 export type RecordResult = 'win' | 'lose' | 'draw' | 'pending';
 
 export interface AttendanceRecord {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { AttendanceRecord, Game } from '../types';
+import type { AttendanceRecord, Game, ThemeDay } from '../types';
 import { TEAMS, team } from '../data/teams';
 import { todayISO } from '../utils';
 import TeamBadge from '../components/TeamBadge';
@@ -8,17 +8,29 @@ interface Props {
   games: Game[];
   records: AttendanceRecord[];
   favTeam: string;
+  themeDays: ThemeDay[];
   onQuickAdd: (g: Game) => void;
   updatedAt?: string;
 }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
-export default function CalendarView({ games, records, favTeam, onQuickAdd, updatedAt }: Props) {
+export default function CalendarView({ games, records, favTeam, themeDays, onQuickAdd, updatedAt }: Props) {
   const today = todayISO();
   const [ym, setYm] = useState(today.slice(0, 7));
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState('');
+
+  const themeByDate = useMemo(() => {
+    const m = new Map<string, ThemeDay[]>();
+    for (const t of themeDays) {
+      if (filter && t.team && t.team !== filter) continue;
+      const arr = m.get(t.date) ?? [];
+      arr.push(t);
+      m.set(t.date, arr);
+    }
+    return m;
+  }, [themeDays, filter]);
 
   const filtered = useMemo(
     () => (filter ? games.filter((g) => g.home === filter || g.away === filter) : games),
@@ -46,6 +58,7 @@ export default function CalendarView({ games, records, favTeam, onQuickAdd, upda
 
   const iso = (day: number) => `${ym}-${String(day).padStart(2, '0')}`;
   const dayGames = byDate.get(selected) ?? [];
+  const dayThemes = themeByDate.get(selected) ?? [];
 
   const statusLabel = (g: Game) => {
     if (g.status === 'postponed') return '延賽';
@@ -87,6 +100,7 @@ export default function CalendarView({ games, records, favTeam, onQuickAdd, upda
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const d = iso(i + 1);
             const gs = byDate.get(d) ?? [];
+            const themes = themeByDate.get(d) ?? [];
             return (
               <div
                 key={d}
@@ -95,6 +109,13 @@ export default function CalendarView({ games, records, favTeam, onQuickAdd, upda
               >
                 {recordDates.has(d) && <span className="went">⚾</span>}
                 <div className="daynum">{i + 1}</div>
+                {themes.length > 0 && (
+                  <span
+                    className="theme-dot"
+                    style={{ background: themes[0].team ? team(themes[0].team).color : 'var(--accent)' }}
+                    title={themes.map((t) => t.name).join('、')}
+                  />
+                )}
                 <div className="games">
                   {gs.slice(0, 3).map((g) => (
                     <span key={g.id} className="matchbar" style={{ opacity: g.status === 'postponed' ? 0.35 : 1 }}>
@@ -120,6 +141,18 @@ export default function CalendarView({ games, records, favTeam, onQuickAdd, upda
 
       <div className="card">
         <h2>{selected.replaceAll('-', '/')} 的賽事</h2>
+        {dayThemes.map((t, i) => (
+          <div key={i} className="theme-banner" style={{ borderColor: t.team ? team(t.team).color : 'var(--accent)' }}>
+            <span className="theme-tag" style={{ background: t.team ? team(t.team).color : 'var(--accent)', color: t.team ? team(t.team).text : '#fff' }}>
+              {t.team ? team(t.team).short : '主題日'}
+            </span>
+            {t.url ? (
+              <a href={t.url} target="_blank" rel="noreferrer">🎉 {t.name}</a>
+            ) : (
+              <span>🎉 {t.name}</span>
+            )}
+          </div>
+        ))}
         {dayGames.length === 0 && <div className="empty">這天沒有{filter ? `${team(filter).short}的` : ''}比賽</div>}
         {dayGames.map((g) => (
           <div key={g.id} className="game-item">

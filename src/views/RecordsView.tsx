@@ -13,6 +13,9 @@ interface Props {
   onAdd: () => void;
   onEdit: (r: AttendanceRecord) => void;
   onDelete: (id: string) => void;
+  themeSheet: string;
+  onThemeSheet: (v: string) => void;
+  themeStatus: { status: 'idle' | 'loading' | 'ok' | 'error'; message: string };
 }
 
 const RESULT_STYLE: Record<RecordResult | 'plan', { label: string; color: string }> = {
@@ -23,7 +26,7 @@ const RESULT_STYLE: Record<RecordResult | 'plan', { label: string; color: string
   plan: { label: '將', color: 'var(--plan)' },
 };
 
-export default function RecordsView({ records, gamesById, favTeam, onFavTeam, onAdd, onEdit, onDelete }: Props) {
+export default function RecordsView({ records, gamesById, favTeam, onFavTeam, onAdd, onEdit, onDelete, themeSheet, onThemeSheet, themeStatus }: Props) {
   const today = todayISO();
   const stats = computeStats(records, gamesById);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -131,6 +134,32 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
           />
         </div>
         <p className="section-note">所有紀錄只存在這台裝置的瀏覽器裡，換裝置前請先匯出備份。</p>
+      </div>
+
+      <div className="card">
+        <h2>主題日 Google Sheet</h2>
+        <div className="field">
+          <label>貼上你的 Google Sheet 連結或 ID（需設為「知道連結的任何人可檢視」）</label>
+          <input
+            value={themeSheet}
+            onChange={(e) => onThemeSheet(e.target.value)}
+            placeholder="https://docs.google.com/spreadsheets/d/..."
+          />
+        </div>
+        {themeStatus.status !== 'idle' && (
+          <p
+            className="section-note"
+            style={{ color: themeStatus.status === 'error' ? 'var(--lose)' : themeStatus.status === 'ok' ? 'var(--win)' : 'var(--muted)' }}
+          >
+            {themeStatus.status === 'ok' ? '✓ ' : themeStatus.status === 'error' ? '✕ ' : ''}
+            {themeStatus.message}
+          </p>
+        )}
+        <p className="section-note">
+          Sheet 第一列請放標題：<b>球隊、日期、主題日、連結</b>（連結可留空）。
+          每一列一場主題日，例如「樂天桃猿、2026/7/5、Hello Kitty 主題日」。
+          你在電腦或手機的 Google Sheet 更新後，重整 app 就會同步顯示。
+        </p>
       </div>
     </>
   );

@@ -60,12 +60,6 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
   const dayGames = byDate.get(selected) ?? [];
   const dayThemes = themeByDate.get(selected) ?? [];
 
-  const statusLabel = (g: Game) => {
-    if (g.status === 'postponed') return '延賽';
-    if (g.status === 'final') return null;
-    return g.time || '時間未定';
-  };
-
   return (
     <>
       <div className="chip-row">
@@ -154,23 +148,29 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
           </div>
         ))}
         {dayGames.length === 0 && <div className="empty">這天沒有{filter ? `${team(filter).short}的` : ''}比賽</div>}
-        {dayGames.map((g) => (
-          <div key={g.id} className="game-item">
-            <TeamBadge code={g.away} />
-            <div className="game-mid">
-              <div className="game-line1">
-                {g.status === 'final' ? (
-                  <span className="score">{g.awayScore} : {g.homeScore}</span>
-                ) : (
-                  <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{statusLabel(g)}</span>
-                )}
+        {dayGames.map((g) => {
+          const final = g.status === 'final' && g.homeScore !== null && g.awayScore !== null;
+          const meta = [
+            g.status === 'postponed' ? '延賽' : g.time || '時間未定',
+            g.stadium,
+            `${team(g.home).short}主場`,
+          ].join(' · ');
+          return (
+            <div key={g.id} className="game-item">
+              <div className="game-mid">
+                <div className="matchup">
+                  <TeamBadge code={g.home} />
+                  <span className={`matchup-sep ${final ? 'score' : 'vs'}`}>
+                    {final ? `${g.homeScore} : ${g.awayScore}` : 'vs'}
+                  </span>
+                  <TeamBadge code={g.away} />
+                </div>
+                <div className="game-line2">{meta}</div>
               </div>
-              <div className="game-line2">{g.stadium}｜{team(g.away).short} 客 vs {team(g.home).short} 主</div>
+              <button className="btn-sm" onClick={() => onQuickAdd(g)}>記進場</button>
             </div>
-            <TeamBadge code={g.home} />
-            <button className="btn-sm" onClick={() => onQuickAdd(g)}>記進場</button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {favTeam && (
@@ -193,12 +193,16 @@ function NextFavGame({ games, favTeam, onQuickAdd }: { games: Game[]; favTeam: s
     <div className="card">
       <h2>{team(favTeam).short}的下一場比賽</h2>
       <div className="game-item">
-        <TeamBadge code={next.away} />
         <div className="game-mid">
-          <div className="game-line1">{next.date.replaceAll('-', '/')} {next.time}</div>
-          <div className="game-line2">{next.stadium}</div>
+          <div className="matchup">
+            <TeamBadge code={next.home} />
+            <span className="matchup-sep vs">vs</span>
+            <TeamBadge code={next.away} />
+          </div>
+          <div className="game-line2">
+            {next.date.replaceAll('-', '/')} {next.time} · {next.stadium} · {team(next.home).short}主場
+          </div>
         </div>
-        <TeamBadge code={next.home} />
         <button className="btn-sm" onClick={() => onQuickAdd(next)}>計畫進場</button>
       </div>
     </div>

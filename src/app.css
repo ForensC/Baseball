@@ -170,8 +170,11 @@ body {
 }
 .game-mid { flex: 1; min-width: 0; }
 .game-line1 { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
-.game-line2 { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.game-line2 { color: var(--muted); font-size: 12px; margin-top: 4px; }
 .score { font-variant-numeric: tabular-nums; font-weight: 700; }
+.matchup { display: flex; align-items: center; gap: 8px; }
+.matchup-sep { min-width: 42px; text-align: center; font-size: 14px; }
+.matchup-sep.vs { color: var(--muted); font-weight: 600; }
 .btn-sm {
   border: 1px solid var(--line);
   background: var(--card);

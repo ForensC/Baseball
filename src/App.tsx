@@ -10,6 +10,10 @@ import RecordModal, { RecordDraft } from './components/RecordModal';
 
 type Tab = 'calendar' | 'records' | 'collection' | 'news';
 
+// 網站預設主題日來源（作者維護的公開 Google Sheet）。
+// 使用者可在「進場」分頁的設定欄位貼上自己的 Sheet 覆蓋。
+const DEFAULT_THEME_SHEET = '1KQtXauU4aeBhEADD781CA7hBLyC3F9Aj108X8Ve4TyY';
+
 const TABS: { id: Tab; label: string; ico: string }[] = [
   { id: 'calendar', label: '賽程', ico: '📅' },
   { id: 'records', label: '進場', ico: '🎟️' },
@@ -24,7 +28,7 @@ export default function App() {
   const [records, setRecords] = useStoredState<AttendanceRecord[]>('records', []);
   const [items, setItems] = useStoredState<CollectionItem[]>('collection', []);
   const [favTeam, setFavTeam] = useStoredState<string>('favTeam', '');
-  const [themeSheet, setThemeSheet] = useStoredState<string>('themeSheet', '');
+  const [themeSheet, setThemeSheet] = useStoredState<string>('themeSheet', DEFAULT_THEME_SHEET);
   const [themeDays, setThemeDays] = useState<ThemeDay[]>([]);
   const [themeStatus, setThemeStatus] = useState<{ status: 'idle' | 'loading' | 'ok' | 'error'; message: string }>({ status: 'idle', message: '' });
   const [draft, setDraft] = useState<RecordDraft | null>(null);

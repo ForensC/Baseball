@@ -1,0 +1,13 @@
+{
+  "name": "野球手帳｜CPBL 追賽紀錄",
+  "short_name": "野球手帳",
+  "description": "中職賽程行事曆、進場紀錄、收藏品與官方消息",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#14532d",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

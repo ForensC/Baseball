@@ -58,7 +58,7 @@ async function fetchSchedule(year) {
   if (!tokenMatch) throw new Error('找不到驗證 token，官網版面可能改版了');
 
   const codes = new Map();
-  const allGames = [];
+  const rawAll = [];
 
   for (const kindCode of KIND_CODES) {
     const res = await request('https://www.cpbl.com.tw/schedule/getgamedatas', {
@@ -73,33 +73,52 @@ async function fetchSchedule(year) {
     });
     const payload = await res.json();
     if (!payload.Success) throw new Error(`getgamedatas(${kindCode}) 回傳失敗`);
-    const raw = JSON.parse(payload.GameDatas);
-
-    for (const g of raw) {
-      if (!g.GameDate) continue;
-      const postponed = g.IsGameStop && g.IsGameStop !== '0';
-      const finished = !postponed && g.GameDateTimeE != null;
-      allGames.push({
-        id: `${g.Year}-${g.KindCode}-${g.GameSno}`,
-        date: g.GameDate.slice(0, 10),
-        time: g.PreExeDate ? g.PreExeDate.slice(11, 16) : '',
-        kindCode: g.KindCode,
-        gameSno: g.GameSno,
-        away: g.VisitingTeamCode,
-        home: g.HomeTeamCode,
-        stadium: g.FieldAbbe || '',
-        awayScore: finished ? g.VisitingScore ?? null : null,
-        homeScore: finished ? g.HomeScore ?? null : null,
-        status: postponed ? 'postponed' : finished ? 'final' : 'scheduled',
-      });
-      codes.set(g.HomeTeamCode, g.HomeTeamName);
-      codes.set(g.VisitingTeamCode, g.VisitingTeamName);
-    }
-    const n = raw.filter((g) => g.GameDate).length;
-    console.log(`kindCode=${kindCode}：${n} 場`);
+    const raw = JSON.parse(payload.GameDatas).filter((g) => g.GameDate);
+    rawAll.push(...raw);
+    console.log(`kindCode=${kindCode}：${raw.length} 場`);
   }
 
+  // 建 Acnt→球員名對照：預告先發（未來場次）通常只有投手帳號、名字為空，
+  // 用已完賽場次的「名字+帳號」配對回填。
+  const nameByAcnt = new Map();
+  for (const g of rawAll) {
+    for (const [a, n] of [
+      [g.VisitingPitcherAcnt, g.VisitingPitcherName],
+      [g.HomePitcherAcnt, g.HomePitcherName],
+      [g.WinningPitcherAcnt, g.WinningPitcherName],
+      [g.LoserPitcherAcnt, g.LoserPitcherName],
+      [g.CloserAcnt, g.CloserName],
+    ]) {
+      if (a && n && n.trim()) nameByAcnt.set(a, n.trim());
+    }
+  }
+  const pitcher = (name, acnt) => (name && name.trim()) || (acnt && nameByAcnt.get(acnt)) || '';
+
+  const allGames = rawAll.map((g) => {
+    const postponed = g.IsGameStop && g.IsGameStop !== '0';
+    const finished = !postponed && g.GameDateTimeE != null;
+    codes.set(g.HomeTeamCode, g.HomeTeamName);
+    codes.set(g.VisitingTeamCode, g.VisitingTeamName);
+    return {
+      id: `${g.Year}-${g.KindCode}-${g.GameSno}`,
+      date: g.GameDate.slice(0, 10),
+      time: g.PreExeDate ? g.PreExeDate.slice(11, 16) : '',
+      kindCode: g.KindCode,
+      gameSno: g.GameSno,
+      away: g.VisitingTeamCode,
+      home: g.HomeTeamCode,
+      stadium: g.FieldAbbe || '',
+      awayScore: finished ? g.VisitingScore ?? null : null,
+      homeScore: finished ? g.HomeScore ?? null : null,
+      status: postponed ? 'postponed' : finished ? 'final' : 'scheduled',
+      awayPitcher: pitcher(g.VisitingPitcherName, g.VisitingPitcherAcnt),
+      homePitcher: pitcher(g.HomePitcherName, g.HomePitcherAcnt),
+    };
+  });
+
   allGames.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const withP = allGames.filter((g) => g.awayPitcher || g.homePitcher).length;
+  console.log(`先發投手：${withP} 場有先發資料（對照 ${nameByAcnt.size} 位球員）`);
 
   console.log('球隊代碼：', Object.fromEntries(codes));
   console.log(`賽程合計：${allGames.length} 場（一軍 ${allGames.filter((g) => g.kindCode === 'A').length}、二軍 ${allGames.filter((g) => g.kindCode === 'D').length}）`);

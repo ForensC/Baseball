@@ -12,6 +12,8 @@ export interface Game {
   awayScore: number | null;
   homeScore: number | null;
   status: GameStatus;
+  awayPitcher?: string; // 先發投手名（含預告先發；未定時為空）
+  homePitcher?: string;
 }
 
 export interface ScheduleData {

@@ -177,6 +177,11 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
                   <TeamBadge code={g.away} />
                 </div>
                 <div className="game-line2">{meta}</div>
+                {(g.homePitcher || g.awayPitcher) && (
+                  <div className="pitcher-line">
+                    <span className="ptag">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
+                  </div>
+                )}
               </div>
               <button className="btn-sm" onClick={() => onQuickAdd(g)}>記進場</button>
             </div>
@@ -213,6 +218,11 @@ function NextFavGame({ games, favTeam, onQuickAdd }: { games: Game[]; favTeam: s
           <div className="game-line2">
             {next.date.replaceAll('-', '/')} {next.time} · {next.stadium} · {team(next.home).short}主場
           </div>
+          {(next.homePitcher || next.awayPitcher) && (
+            <div className="pitcher-line">
+              <span className="ptag">先發</span>{next.homePitcher || '未定'} vs {next.awayPitcher || '未定'}
+            </div>
+          )}
         </div>
         <button className="btn-sm" onClick={() => onQuickAdd(next)}>計畫進場</button>
       </div>

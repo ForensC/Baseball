@@ -37,8 +37,49 @@ function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: (
           <TeamBadge code={g.away} />
         </div>
         <div className="game-line2">{meta}</div>
+        {(g.homePitcher || g.awayPitcher) && (
+          <div className="pitcher-line">
+            <span className="ptag">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
+          </div>
+        )}
       </div>
       <button className="btn-sm" onClick={onAction}>{action}</button>
+    </div>
+  );
+}
+
+// 參考 BruceBaseball 的即將出賽大卡，兩側用隊色、中央 VS、下方先發投手對決
+function BigMatch({ g, countdown, onAction }: { g: Game; countdown: string; onAction: () => void }) {
+  const home = team(g.home);
+  const away = team(g.away);
+  const final = g.status === 'final' && g.homeScore !== null && g.awayScore !== null;
+  return (
+    <div className="bigmatch">
+      <div className="bigmatch-top">
+        <span className="bm-status">{countdown}</span>
+        <span className="bm-when">{g.date.slice(5).replace('-', '/')}（{'日一二三四五六'[new Date(g.date + 'T00:00:00').getDay()]}）{g.time} · {g.stadium}</span>
+      </div>
+      <div className="bigmatch-teams">
+        <div className="bm-side" style={{ background: home.color + '1f' }}>
+          <span className="bm-logo" style={{ background: home.color, color: home.text }}>{home.short}</span>
+          <span className="bm-name">{home.name}</span>
+          <span className="bm-ha">主場</span>
+        </div>
+        <div className="bm-center">{final ? `${g.homeScore} : ${g.awayScore}` : 'VS'}</div>
+        <div className="bm-side" style={{ background: away.color + '1f' }}>
+          <span className="bm-logo" style={{ background: away.color, color: away.text }}>{away.short}</span>
+          <span className="bm-name">{away.name}</span>
+          <span className="bm-ha">客場</span>
+        </div>
+      </div>
+      {(g.homePitcher || g.awayPitcher) && (
+        <div className="bm-pitchers">
+          <span className="bm-p">{g.homePitcher || '先發未定'}</span>
+          <span className="bm-plabel">先發投手</span>
+          <span className="bm-p">{g.awayPitcher || '先發未定'}</span>
+        </div>
+      )}
+      <button className="btn-primary" style={{ marginTop: 12 }} onClick={onAction}>計畫進場</button>
     </div>
   );
 }
@@ -95,12 +136,13 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
         favNext && (
           <div className="card">
             <CardHead title={`${team(favTeam).short}的下一場`} more="賽程" onMore={() => onNavigate('calendar')} />
-            <div className="focus-count">
-              {favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
-            </div>
-            <GameRow g={favNext} action="計畫進場" onAction={() => onQuickAdd(favNext)} />
+            <BigMatch
+              g={favNext}
+              countdown={favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
+              onAction={() => onQuickAdd(favNext)}
+            />
             {favTheme && (
-              <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)' }}>
+              <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)', marginTop: 10 }}>
                 <span className="theme-tag" style={{ background: favTheme.team ? team(favTheme.team).color : 'var(--accent)', color: favTheme.team ? team(favTheme.team).text : '#fff' }}>
                   {favTheme.team ? team(favTheme.team).short : '主題日'}
                 </span>

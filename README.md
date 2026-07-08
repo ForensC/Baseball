@@ -10,7 +10,7 @@
 - **消息**：CPBL 官網最新公告與各隊官方連結
 - **主題日**：從你自己維護的 Google Sheet 讀取各隊主題日，標記在行事曆上
 
-個人資料只存在裝置的 localStorage，可在「進場」分頁匯出/匯入 JSON 備份。
+個人資料存在裝置的 localStorage，可在「進場」分頁匯出/匯入 JSON 備份，或設定雲端同步（見下）跨裝置共用。
 
 ## 開發
 
@@ -41,7 +41,16 @@ npm run build         # 產出 dist/
 
 app 透過 Google 的 gviz CSV endpoint（`/gviz/tq?tqx=out:csv`）讀取，純前端、免登入、免後端；Google 會回應 CORS 標頭允許跨域讀取。之後你在 Sheet 增修，重整 app 就同步。球隊欄位可填全名或簡稱（自動對應），日期支援 `2026-07-05`、`2026/7/5`、`2026.7.5`。
 
-> 進場紀錄與收藏品的雙向 Google Sheet 同步（需 Apps Script）為後續規劃。
+## 雲端同步（進場紀錄 + 收藏品，手機 ↔ 電腦）
+
+進場紀錄含個人資料，不適合放公開 Sheet，也無法用匿名端點寫入，因此改用 Google Apps Script Web App 當讀寫後端（以你的身分執行、存取一個私人 Sheet）：
+
+1. 開一個私人 Google Sheet → 擴充功能 → Apps Script
+2. 貼上 [`docs/sync-apps-script.gs`](docs/sync-apps-script.gs) 全部內容
+3. 部署為「網頁應用程式」：執行身分 = 我、誰可以存取 = **任何人**（不是「任何 Google 帳戶」）
+4. 複製結尾 `/exec` 的網址，貼進 app「進場」分頁的「雲端同步」欄位
+
+之後進場紀錄與收藏品會自動雙向同步：開啟 app 時從 Sheet 拉最新、你新增/修改/刪除時自動寫回。app 端用 GET 讀、POST（`text/plain` 免 preflight）覆寫，Web App 回應帶 CORS，已實測可跨域。
 
 ## 在 iPhone 上當 App 用
 

@@ -16,6 +16,9 @@ interface Props {
   themeSheet: string;
   onThemeSheet: (v: string) => void;
   themeStatus: { status: 'idle' | 'loading' | 'ok' | 'error'; message: string };
+  cloudUrl: string;
+  onCloudUrl: (v: string) => void;
+  syncState: { status: 'idle' | 'syncing' | 'ok' | 'error'; at?: string; message?: string };
 }
 
 const RESULT_STYLE: Record<RecordResult | 'plan', { label: string; color: string }> = {
@@ -26,7 +29,7 @@ const RESULT_STYLE: Record<RecordResult | 'plan', { label: string; color: string
   plan: { label: '將', color: 'var(--plan)' },
 };
 
-export default function RecordsView({ records, gamesById, favTeam, onFavTeam, onAdd, onEdit, onDelete, themeSheet, onThemeSheet, themeStatus }: Props) {
+export default function RecordsView({ records, gamesById, favTeam, onFavTeam, onAdd, onEdit, onDelete, themeSheet, onThemeSheet, themeStatus, cloudUrl, onCloudUrl, syncState }: Props) {
   const today = todayISO();
   const stats = computeStats(records, gamesById);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -134,6 +137,32 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
           />
         </div>
         <p className="section-note">所有紀錄只存在這台裝置的瀏覽器裡，換裝置前請先匯出備份。</p>
+      </div>
+
+      <div className="card">
+        <h2>雲端同步（手機 ↔ 電腦）</h2>
+        <div className="field">
+          <label>貼上你的 Apps Script 網頁應用程式網址（結尾 /exec；留空＝不同步）</label>
+          <input
+            value={cloudUrl}
+            onChange={(e) => onCloudUrl(e.target.value)}
+            placeholder="https://script.google.com/macros/s/.../exec"
+          />
+        </div>
+        {syncState.status !== 'idle' && (
+          <p
+            className="section-note"
+            style={{ color: syncState.status === 'error' ? 'var(--lose)' : syncState.status === 'ok' ? 'var(--win)' : 'var(--muted)' }}
+          >
+            {syncState.status === 'syncing' && '⟳ 同步中…'}
+            {syncState.status === 'ok' && `✓ 已同步${syncState.at ? '（' + new Date(syncState.at).toLocaleString('zh-Hant-TW') + '）' : ''}${syncState.message ? '，' + syncState.message : ''}`}
+            {syncState.status === 'error' && `✕ ${syncState.message || '同步失敗'}`}
+          </p>
+        )}
+        <p className="section-note">
+          設定後，進場紀錄與收藏品會自動與你的私人 Google Sheet 雙向同步：開啟 app 時拉最新、
+          你新增或修改時自動寫回。手機記一筆，電腦打開就看得到。
+        </p>
       </div>
 
       <div className="card">

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AttendanceRecord, CollectionItem, Game, NewsData, ScheduleData, ThemeDay } from './types';
 import { useStoredState } from './store';
 import { fetchThemeDays } from './themedays';
+import { pullCloud, pushCloud } from './sync';
 import HomeView from './views/HomeView';
 import CalendarView from './views/CalendarView';
 import RecordsView from './views/RecordsView';
@@ -37,6 +38,58 @@ export default function App() {
   const [themeDays, setThemeDays] = useState<ThemeDay[]>([]);
   const [themeStatus, setThemeStatus] = useState<{ status: 'idle' | 'loading' | 'ok' | 'error'; message: string }>({ status: 'idle', message: '' });
   const [draft, setDraft] = useState<RecordDraft | null>(null);
+
+  // 進場/收藏的雲端同步（使用者自建的 Apps Script Web App）
+  const [cloudUrl, setCloudUrl] = useStoredState<string>('cloudUrl', '');
+  const [syncState, setSyncState] = useState<{ status: 'idle' | 'syncing' | 'ok' | 'error'; at?: string; message?: string }>({ status: 'idle' });
+  const skipPushRef = useRef(false);   // 剛從雲端載入的資料不要立刻又推回去
+  const pulledRef = useRef(false);     // 首次 pull 完成前不推送
+
+  // cloudUrl 設定（含開啟 app）時，從雲端拉最新；雲端空但本地有資料則改為上傳本地
+  useEffect(() => {
+    const url = cloudUrl.trim();
+    pulledRef.current = false;
+    if (!url) { setSyncState({ status: 'idle' }); return; }
+    let cancelled = false;
+    setSyncState({ status: 'syncing', message: '同步中…' });
+    pullCloud(url).then((cloud) => {
+      if (cancelled) return;
+      const cloudHas = cloud.records.length || cloud.collection.length;
+      if (cloudHas) {
+        skipPushRef.current = true;
+        setRecords(cloud.records);
+        setItems(cloud.collection);
+        setSyncState({ status: 'ok', at: new Date().toISOString() });
+        pulledRef.current = true;
+      } else if (records.length || items.length) {
+        pushCloud(url, { records, collection: items })
+          .then(() => { if (!cancelled) { setSyncState({ status: 'ok', at: new Date().toISOString(), message: '已把本機資料上傳雲端' }); pulledRef.current = true; } })
+          .catch(() => { if (!cancelled) setSyncState({ status: 'error', message: '上傳失敗' }); });
+      } else {
+        setSyncState({ status: 'ok', at: new Date().toISOString() });
+        pulledRef.current = true;
+      }
+    }).catch(() => {
+      if (!cancelled) setSyncState({ status: 'error', message: '連線失敗，請確認網址與存取權限' });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudUrl]);
+
+  // 進場/收藏變更時，debounce 推回雲端
+  useEffect(() => {
+    const url = cloudUrl.trim();
+    if (!url || !pulledRef.current) return;
+    if (skipPushRef.current) { skipPushRef.current = false; return; }
+    setSyncState((s) => ({ ...s, status: 'syncing' }));
+    const t = setTimeout(() => {
+      pushCloud(url, { records, collection: items })
+        .then(() => setSyncState({ status: 'ok', at: new Date().toISOString() }))
+        .catch(() => setSyncState({ status: 'error', message: '上傳失敗' }));
+    }, 1200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records, items]);
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL;
@@ -120,6 +173,9 @@ export default function App() {
           themeSheet={themeSheet}
           onThemeSheet={setThemeSheet}
           themeStatus={themeStatus}
+          cloudUrl={cloudUrl}
+          onCloudUrl={setCloudUrl}
+          syncState={syncState}
         />
       )}
       {tab === 'collection' && (

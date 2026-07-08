@@ -24,7 +24,8 @@ export default function RecordModal({ draft, games, onSave, onClose }: Props) {
   const e = draft.editing;
   const [date, setDate] = useState(e?.date ?? draft.date ?? todayISO());
   const [gameId, setGameId] = useState(e?.gameId ?? draft.gameId ?? '');
-  const [myTeam, setMyTeam] = useState(e?.myTeam ?? draft.myTeam ?? TEAMS[0].code);
+  // 用 || 而非 ??：favTeam 未設時 draft.myTeam 是空字串，需退回第一隊
+  const [myTeam, setMyTeam] = useState(e?.myTeam || draft.myTeam || TEAMS[0].code);
   const [opponent, setOpponent] = useState(e?.opponent ?? '');
   const [stadium, setStadium] = useState(e?.stadium ?? draft.stadium ?? '');
   const [price, setPrice] = useState(e ? String(e.price || '') : '');

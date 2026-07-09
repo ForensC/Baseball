@@ -30,10 +30,10 @@ function mergeThemeOptions(days: ThemeDay[]): string[] {
   return options.sort();
 }
 
-const CATEGORIES = ['球衣', '帽子', '應援商品', '簽名球/卡', '公仔娃娃', '其他'];
+const CATEGORIES = ['球衣', '帽子', '毛巾', '主題球/紀念球', '球員卡', '其他'];
 const CAT_COLORS = ['#1e4b8f', '#e8b004', '#c8102e', '#0a6b5d', '#a50050', '#64748b'];
 const CAT_EMOJI: Record<string, string> = {
-  球衣: '👕', 帽子: '🧢', 應援商品: '📣', '簽名球/卡': '⚾', 公仔娃娃: '🧸', 其他: '📦',
+  球衣: '👕', 帽子: '🧢', 毛巾: '🧣', '主題球/紀念球': '⚾', 球員卡: '🎴', 其他: '📦',
 };
 const catColor = (c: string) => CAT_COLORS[Math.max(0, CATEGORIES.indexOf(c))];
 const isTreasured = (i: CollectionItem) => !!i.significance?.trim();

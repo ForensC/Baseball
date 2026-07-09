@@ -190,9 +190,20 @@ function ItemModal({ item, themeDays, onSave, onClose }: {
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [note, setNote] = useState(item?.note ?? '');
 
-  // 主題日下拉：依球隊分組（optgroup），顯示完整年份，同名不同場次各自保留
+  // 主題日下拉：有選球隊時只顯示該隊、依年份分組；未選球隊時依球隊分組。
+  // 顯示完整年份，同名不同場次各自保留（不合併）。
   const themeVal = (t: ThemeDay) => `${t.date.replaceAll('-', '/')} ${t.name}`;
   const themeGroups = useMemo(() => {
+    if (teamCode) {
+      const days = themeDays.filter((t) => t.team === teamCode).sort((a, b) => a.date.localeCompare(b.date));
+      const m = new Map<string, ThemeDay[]>();
+      for (const t of days) {
+        const year = t.date.slice(0, 4);
+        if (!m.has(year)) m.set(year, []);
+        m.get(year)!.push(t);
+      }
+      return [...m.entries()].map(([year, ds]) => ({ label: `${year} 年`, days: ds }));
+    }
     const m = new Map<string, ThemeDay[]>();
     for (const t of themeDays) {
       const key = t.team || '__none';
@@ -204,7 +215,7 @@ function ItemModal({ item, themeDays, onSave, onClose }: {
       label: k === '__none' ? '其他' : team(k).name,
       days: m.get(k)!.slice().sort((a, b) => a.date.localeCompare(b.date)),
     }));
-  }, [themeDays]);
+  }, [themeDays, teamCode]);
   const themeValSet = useMemo(() => new Set(themeDays.map(themeVal)), [themeDays]);
   const preview = displayImage(imageUrl, 600);
 

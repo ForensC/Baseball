@@ -348,7 +348,10 @@ body {
 .cat-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
 .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 
-.cab-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 10px 0; }
+.cab-group { margin-top: 14px; }
+.cab-group-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin: 0 2px 8px; }
+.cab-group-count { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 400; }
+.cab-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0 0 4px; }
 .cab-card {
   text-align: left;
   background: var(--card);

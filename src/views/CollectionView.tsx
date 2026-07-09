@@ -49,6 +49,40 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
     setViewing(null);
   };
 
+  // 依球隊分櫃：每隊一區，未填球隊歸「未分類」
+  const groups = useMemo(() => {
+    const m = new Map<string, CollectionItem[]>();
+    for (const i of shown) {
+      const key = i.team || '__none';
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(i);
+    }
+    const order = [...TEAMS.map((t) => t.code), '__none'];
+    return order.filter((k) => m.has(k)).map((k) => ({ key: k, items: m.get(k)! }));
+  }, [shown]);
+
+  const renderCard = (i: CollectionItem) => {
+    const img = displayImage(i.imageUrl, 600);
+    const treasured = isTreasured(i);
+    return (
+      <button key={i.id} className={`cab-card ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
+        <div className="cab-img">
+          {img ? (
+            <img src={img} alt={i.name} loading="lazy" />
+          ) : (
+            <span className="cab-ph" style={{ background: catColor(i.category) + '22', color: catColor(i.category) }}>{CAT_EMOJI[i.category] || '📦'}</span>
+          )}
+          {treasured && <span className="cab-star">⭐</span>}
+        </div>
+        <div className="cab-body">
+          <div className="cab-name">{i.name}</div>
+          <div className="cab-meta">{i.date.replaceAll('-', '/')}</div>
+          {treasured && <div className="cab-sig">{i.significance}</div>}
+        </div>
+      </button>
+    );
+  };
+
   return (
     <>
       <div className="card">
@@ -76,33 +110,19 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
 
       {items.length === 0 ? (
         <div className="card"><div className="empty">收藏櫃還是空的，把你的球衣、簽名球、應援小物加進來吧！</div></div>
+      ) : shown.length === 0 ? (
+        <div className="card"><div className="empty">這個分類沒有收藏品</div></div>
       ) : (
-        <div className="cab-grid">
-          {shown.map((i) => {
-            const img = displayImage(i.imageUrl, 600);
-            const treasured = isTreasured(i);
-            return (
-              <button key={i.id} className={`cab-card ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
-                <div className="cab-img">
-                  {img ? (
-                    <img src={img} alt={i.name} loading="lazy" />
-                  ) : (
-                    <span className="cab-ph" style={{ background: catColor(i.category) + '22', color: catColor(i.category) }}>{CAT_EMOJI[i.category] || '📦'}</span>
-                  )}
-                  {treasured && <span className="cab-star">⭐</span>}
-                </div>
-                <div className="cab-body">
-                  <div className="cab-name">{i.name}</div>
-                  <div className="cab-meta">
-                    {i.team && <span className="cab-dot" style={{ background: team(i.team).color }} />}
-                    {[i.team ? team(i.team).short : '', i.date.replaceAll('-', '/')].filter(Boolean).join(' · ')}
-                  </div>
-                  {treasured && <div className="cab-sig">{i.significance}</div>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        groups.map((g) => (
+          <div key={g.key} className="cab-group">
+            <div className="cab-group-head">
+              <span className="cab-dot" style={{ background: g.key === '__none' ? 'var(--muted)' : team(g.key).color }} />
+              {g.key === '__none' ? '未分類' : team(g.key).name}
+              <span className="cab-group-count">{g.items.length} 件</span>
+            </div>
+            <div className="cab-grid">{g.items.map(renderCard)}</div>
+          </div>
+        ))
       )}
 
       {viewing && (
@@ -170,10 +190,22 @@ function ItemModal({ item, themeDays, onSave, onClose }: {
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [note, setNote] = useState(item?.note ?? '');
 
-  const themeNames = useMemo(() => {
-    const seen = new Set<string>();
-    return themeDays.filter((t) => (seen.has(t.name) ? false : (seen.add(t.name), true)));
+  // 主題日下拉：依球隊分組（optgroup），顯示完整年份，同名不同場次各自保留
+  const themeVal = (t: ThemeDay) => `${t.date.replaceAll('-', '/')} ${t.name}`;
+  const themeGroups = useMemo(() => {
+    const m = new Map<string, ThemeDay[]>();
+    for (const t of themeDays) {
+      const key = t.team || '__none';
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(t);
+    }
+    const order = [...TEAMS.map((t) => t.code), '__none'];
+    return order.filter((k) => m.has(k)).map((k) => ({
+      label: k === '__none' ? '其他' : team(k).name,
+      days: m.get(k)!.slice().sort((a, b) => a.date.localeCompare(b.date)),
+    }));
   }, [themeDays]);
+  const themeValSet = useMemo(() => new Set(themeDays.map(themeVal)), [themeDays]);
   const preview = displayImage(imageUrl, 600);
 
   const save = () => {
@@ -229,7 +261,12 @@ function ItemModal({ item, themeDays, onSave, onClose }: {
           <label>所屬主題日（選填）</label>
           <select value={themeDay} onChange={(e) => setThemeDay(e.target.value)}>
             <option value="">－</option>
-            {themeNames.map((t) => <option key={t.date + t.name} value={t.name}>{t.date.slice(5).replace('-', '/')} {t.name}</option>)}
+            {themeDay && !themeValSet.has(themeDay) && <option value={themeDay}>{themeDay}</option>}
+            {themeGroups.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.days.map((t) => <option key={themeVal(t)} value={themeVal(t)}>{themeVal(t)}</option>)}
+              </optgroup>
+            ))}
           </select>
         </div>
         <div className="field">

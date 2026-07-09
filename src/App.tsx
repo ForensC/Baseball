@@ -179,7 +179,7 @@ export default function App() {
         />
       )}
       {tab === 'collection' && (
-        <CollectionView items={items} setItems={setItems} records={records} />
+        <CollectionView items={items} setItems={setItems} records={records} themeDays={themeDays} />
       )}
       {tab === 'news' && <NewsView news={news} />}
 

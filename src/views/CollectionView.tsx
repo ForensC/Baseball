@@ -1,29 +1,39 @@
 import { useMemo, useState } from 'react';
-import type { AttendanceRecord, CollectionItem } from '../types';
+import type { AttendanceRecord, CollectionItem, ThemeDay } from '../types';
 import { TEAMS, team } from '../data/teams';
+import { displayImage } from '../drive';
 import { formatMoney, todayISO, uid } from '../utils';
 
 const CATEGORIES = ['球衣', '帽子', '應援商品', '簽名球/卡', '公仔娃娃', '其他'];
 const CAT_COLORS = ['#1e4b8f', '#e8b004', '#c8102e', '#0a6b5d', '#a50050', '#64748b'];
+const CAT_EMOJI: Record<string, string> = {
+  球衣: '👕', 帽子: '🧢', 應援商品: '📣', '簽名球/卡': '⚾', 公仔娃娃: '🧸', 其他: '📦',
+};
+const catColor = (c: string) => CAT_COLORS[Math.max(0, CATEGORIES.indexOf(c))];
+const isTreasured = (i: CollectionItem) => !!i.significance?.trim();
 
 interface Props {
   items: CollectionItem[];
   setItems: (fn: (prev: CollectionItem[]) => CollectionItem[]) => void;
   records: AttendanceRecord[];
+  themeDays: ThemeDay[];
 }
 
-export default function CollectionView({ items, setItems, records }: Props) {
+export default function CollectionView({ items, setItems, records, themeDays }: Props) {
   const [editing, setEditing] = useState<CollectionItem | 'new' | null>(null);
+  const [viewing, setViewing] = useState<CollectionItem | null>(null);
+  const [filter, setFilter] = useState('');
 
   const collectionTotal = items.reduce((s, i) => s + (i.price || 0), 0);
   const ticketTotal = records.reduce((s, r) => s + (r.price || 0), 0);
+  const treasuredCount = items.filter(isTreasured).length;
 
-  const byCat = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const i of items) m.set(i.category, (m.get(i.category) ?? 0) + (i.price || 0));
-    return CATEGORIES.map((c, idx) => ({ cat: c, total: m.get(c) ?? 0, color: CAT_COLORS[idx] }))
-      .filter((x) => x.total > 0);
-  }, [items]);
+  const cats = useMemo(() => CATEGORIES.filter((c) => items.some((i) => i.category === c)), [items]);
+  const shown = useMemo(() => {
+    if (filter === '__t') return items.filter(isTreasured);
+    if (filter) return items.filter((i) => i.category === filter);
+    return items;
+  }, [items, filter]);
 
   const save = (item: CollectionItem) => {
     setItems((prev) => {
@@ -32,92 +42,139 @@ export default function CollectionView({ items, setItems, records }: Props) {
       return next.sort((a, b) => b.date.localeCompare(a.date));
     });
     setEditing(null);
+    setViewing(null);
+  };
+  const remove = (id: string) => {
+    setItems((prev) => prev.filter((x) => x.id !== id));
+    setViewing(null);
   };
 
   return (
     <>
       <div className="card">
-        <h2>棒球總花費</h2>
+        <h2>我的收藏櫃</h2>
         <div className="stat-grid">
-          <div className="stat"><div className="v">{formatMoney(collectionTotal)}</div><div className="k">收藏品（{items.length} 件）</div></div>
-          <div className="stat"><div className="v">{formatMoney(ticketTotal)}</div><div className="k">門票</div></div>
-          <div className="stat"><div className="v">{formatMoney(collectionTotal + ticketTotal)}</div><div className="k">合計</div></div>
+          <div className="stat"><div className="v">{items.length}</div><div className="k">收藏件數</div></div>
+          <div className="stat"><div className="v">{formatMoney(collectionTotal)}</div><div className="k">收藏總值</div></div>
+          <div className="stat"><div className="v">{formatMoney(collectionTotal + ticketTotal)}</div><div className="k">含門票合計</div></div>
         </div>
-        {byCat.length > 0 && (
-          <>
-            <div className="catbar">
-              {byCat.map((x) => (
-                <span key={x.cat} style={{ background: x.color, flexGrow: x.total }} />
-              ))}
-            </div>
-            <div className="cat-legend">
-              {byCat.map((x) => (
-                <span key={x.cat}>
-                  <span className="cat-dot" style={{ background: x.color }} />
-                  {x.cat} {formatMoney(x.total)}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
       </div>
+
+      {items.length > 0 && (
+        <div className="chip-row">
+          <button className={`chip ${filter === '' ? 'active' : ''}`} style={filter === '' ? { background: 'var(--accent)', color: '#fff' } : undefined} onClick={() => setFilter('')}>全部</button>
+          {treasuredCount > 0 && (
+            <button className={`chip ${filter === '__t' ? 'active' : ''}`} style={filter === '__t' ? { background: '#b45309', color: '#fff' } : undefined} onClick={() => setFilter('__t')}>⭐ 珍藏 {treasuredCount}</button>
+          )}
+          {cats.map((c) => (
+            <button key={c} className={`chip ${filter === c ? 'active' : ''}`} style={filter === c ? { background: catColor(c), color: '#fff' } : undefined} onClick={() => setFilter(c)}>{c}</button>
+          ))}
+        </div>
+      )}
 
       <button className="btn-primary" onClick={() => setEditing('new')}>＋ 新增收藏品</button>
 
-      <div className="card">
-        <h2>收藏清單</h2>
-        {items.length === 0 && <div className="empty">還沒有收藏品，快去球場周邊補貨！</div>}
-        {items.map((i) => (
-          <div key={i.id} className="rec-item">
-            <span
-              className="result-pill"
-              style={{ background: CAT_COLORS[Math.max(0, CATEGORIES.indexOf(i.category))], fontSize: 11 }}
-            >
-              {i.category.slice(0, 2)}
-            </span>
-            <div className="rec-mid">
-              <div className="rec-title">{i.name}</div>
-              <div className="rec-sub">
-                {[i.date.replaceAll('-', '/'), i.team ? team(i.team).short : '', i.note].filter(Boolean).join('｜')}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div className="rec-price">{formatMoney(i.price)}</div>
-              <button className="icon-btn" onClick={() => setEditing(i)} aria-label="編輯">✏️</button>
-              <button
-                className="icon-btn"
-                onClick={() => { if (confirm(`確定刪除「${i.name}」？`)) setItems((prev) => prev.filter((x) => x.id !== i.id)); }}
-                aria-label="刪除"
-              >
-                🗑️
+      {items.length === 0 ? (
+        <div className="card"><div className="empty">收藏櫃還是空的，把你的球衣、簽名球、應援小物加進來吧！</div></div>
+      ) : (
+        <div className="cab-grid">
+          {shown.map((i) => {
+            const img = displayImage(i.imageUrl, 600);
+            const treasured = isTreasured(i);
+            return (
+              <button key={i.id} className={`cab-card ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
+                <div className="cab-img">
+                  {img ? (
+                    <img src={img} alt={i.name} loading="lazy" />
+                  ) : (
+                    <span className="cab-ph" style={{ background: catColor(i.category) + '22', color: catColor(i.category) }}>{CAT_EMOJI[i.category] || '📦'}</span>
+                  )}
+                  {treasured && <span className="cab-star">⭐</span>}
+                </div>
+                <div className="cab-body">
+                  <div className="cab-name">{i.name}</div>
+                  <div className="cab-meta">
+                    {i.team && <span className="cab-dot" style={{ background: team(i.team).color }} />}
+                    {[i.team ? team(i.team).short : '', i.date.replaceAll('-', '/')].filter(Boolean).join(' · ')}
+                  </div>
+                  {treasured && <div className="cab-sig">{i.significance}</div>}
+                </div>
               </button>
-            </div>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
+      {viewing && (
+        <DetailModal item={viewing} onEdit={() => { setEditing(viewing); setViewing(null); }} onDelete={() => { if (confirm(`確定刪除「${viewing.name}」？`)) remove(viewing.id); }} onClose={() => setViewing(null)} />
+      )}
       {editing && (
-        <ItemModal
-          item={editing === 'new' ? null : editing}
-          onSave={save}
-          onClose={() => setEditing(null)}
-        />
+        <ItemModal item={editing === 'new' ? null : editing} themeDays={themeDays} onSave={save} onClose={() => setEditing(null)} />
       )}
     </>
   );
 }
 
-function ItemModal({ item, onSave, onClose }: {
-  item: CollectionItem | null;
-  onSave: (i: CollectionItem) => void;
-  onClose: () => void;
+function DetailModal({ item, onEdit, onDelete, onClose }: {
+  item: CollectionItem; onEdit: () => void; onDelete: () => void; onClose: () => void;
+}) {
+  const img = displayImage(item.imageUrl, 1200);
+  const treasured = isTreasured(item);
+  const rows: [string, string][] = [
+    ['分類', item.category],
+    ['所屬球隊', item.team ? team(item.team).name : '－'],
+    ['主題日', item.themeDay || '－'],
+    ['購入日期', item.date.replaceAll('-', '/')],
+    ['價格', item.price ? formatMoney(item.price) : '－'],
+    ['筆記', item.note || '－'],
+  ];
+  return (
+    <div className="modal-mask" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="detail-img">
+          {img ? <img src={img} alt={item.name} /> : <span className="cab-ph big" style={{ background: catColor(item.category) + '22', color: catColor(item.category) }}>{CAT_EMOJI[item.category] || '📦'}</span>}
+        </div>
+        <h3 style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {treasured && <span aria-label="珍藏">⭐</span>}{item.name}
+        </h3>
+        {treasured && (
+          <div className="detail-sig">紀念價值：{item.significance}</div>
+        )}
+        <table className="detail-table">
+          <tbody>
+            {rows.map(([k, v]) => (
+              <tr key={k}><td>{k}</td><td>{v}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="modal-actions">
+          <button className="btn-ghost" onClick={onDelete} style={{ color: 'var(--lose)' }}>刪除</button>
+          <button className="btn-ghost" onClick={onClose}>關閉</button>
+          <button className="btn-primary" onClick={onEdit}>編輯</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemModal({ item, themeDays, onSave, onClose }: {
+  item: CollectionItem | null; themeDays: ThemeDay[]; onSave: (i: CollectionItem) => void; onClose: () => void;
 }) {
   const [name, setName] = useState(item?.name ?? '');
   const [category, setCategory] = useState(item?.category ?? CATEGORIES[0]);
   const [price, setPrice] = useState(item ? String(item.price || '') : '');
   const [date, setDate] = useState(item?.date ?? todayISO());
   const [teamCode, setTeamCode] = useState(item?.team ?? '');
+  const [themeDay, setThemeDay] = useState(item?.themeDay ?? '');
+  const [significance, setSignificance] = useState(item?.significance ?? '');
+  const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [note, setNote] = useState(item?.note ?? '');
+
+  const themeNames = useMemo(() => {
+    const seen = new Set<string>();
+    return themeDays.filter((t) => (seen.has(t.name) ? false : (seen.add(t.name), true)));
+  }, [themeDays]);
+  const preview = displayImage(imageUrl, 600);
 
   const save = () => {
     if (!name.trim()) return;
@@ -128,17 +185,20 @@ function ItemModal({ item, onSave, onClose }: {
       price: Number(price) || 0,
       date,
       team: teamCode || undefined,
+      themeDay: themeDay || undefined,
+      significance: significance.trim() || undefined,
+      imageUrl: imageUrl.trim() || undefined,
       note: note.trim() || undefined,
     });
   };
 
   return (
     <div className="modal-mask" onClick={onClose}>
-      <div className="modal" onClick={(ev) => ev.stopPropagation()}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>{item ? '編輯收藏品' : '新增收藏品'}</h3>
         <div className="field">
           <label>名稱</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例：兄弟主場球衣" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例：王柏融簽名球" />
         </div>
         <div className="field-row">
           <div className="field">
@@ -166,8 +226,26 @@ function ItemModal({ item, onSave, onClose }: {
           </div>
         </div>
         <div className="field">
+          <label>所屬主題日（選填）</label>
+          <select value={themeDay} onChange={(e) => setThemeDay(e.target.value)}>
+            <option value="">－</option>
+            {themeNames.map((t) => <option key={t.date + t.name} value={t.name}>{t.date.slice(5).replace('-', '/')} {t.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>紀念價值（填了就標為 ⭐ 珍藏）</label>
+          <input value={significance} onChange={(e) => setSignificance(e.target.value)} placeholder="例：亞洲之鑽親筆簽名" />
+        </div>
+        <div className="field">
+          <label>圖片網址（Google Drive 需設「知道連結的任何人可檢視」）</label>
+          <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="貼上 Drive 分享連結或圖片網址" />
+          {preview && (
+            <div className="img-preview"><img src={preview} alt="預覽" /></div>
+          )}
+        </div>
+        <div className="field">
           <label>筆記</label>
-          <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="購入地點、紀念意義⋯" />
+          <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="購入地點、故事⋯" />
         </div>
         <div className="modal-actions">
           <button className="btn-ghost" onClick={onClose}>取消</button>

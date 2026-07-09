@@ -64,5 +64,8 @@ export interface CollectionItem {
   price: number;
   date: string;
   team?: string;
+  themeDay?: string;     // 所屬主題日（名稱，索引主題日）
+  significance?: string; // 紀念價值；有填即視為珍藏
+  imageUrl?: string;     // Google Drive 公開連結或其他圖片網址
   note?: string;
 }

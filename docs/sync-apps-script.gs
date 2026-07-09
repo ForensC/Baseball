@@ -13,7 +13,7 @@
 const SS = SpreadsheetApp.getActiveSpreadsheet();
 const COLS = {
   records: ['id', 'date', 'gameId', 'myTeam', 'opponent', 'stadium', 'price', 'seat', 'result', 'note'],
-  collection: ['id', 'name', 'category', 'price', 'date', 'team', 'note'],
+  collection: ['id', 'name', 'category', 'price', 'date', 'team', 'themeDay', 'significance', 'imageUrl', 'note'],
 };
 
 function sheet(name) {

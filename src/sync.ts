@@ -34,6 +34,9 @@ function normItem(i: Record<string, unknown>): CollectionItem {
     price: Number(i.price) || 0,
     date: str(i.date),
     team: opt(i.team),
+    themeDay: opt(i.themeDay),
+    significance: opt(i.significance),
+    imageUrl: opt(i.imageUrl),
     note: opt(i.note),
   };
 }

@@ -1,8 +1,11 @@
-name: 每日更新 CPBL 資料
+name: 更新 CPBL 資料（目前僅支援手動觸發）
 
+# 原本的每日排程（cron）已停用：CPBL 官網的 CDN 會擋掉來自 GitHub Actions
+# 伺服器（微軟 Azure 機房 IP）的請求，回傳 HTTP 404，導致排程必定失敗。
+# 手動觸發（workflow_dispatch）跑在同一批機房，理論上一樣會被擋；
+# 目前資料改為需要時在其他能連到 CPBL 的環境手動執行
+# `node scripts/fetch-cpbl.mjs` 後 commit + push。詳見 README「資料更新」一節。
 on:
-  schedule:
-    - cron: '0 22 * * *' # 台灣時間每天早上 6:00
   workflow_dispatch: {}
 
 permissions:

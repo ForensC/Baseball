@@ -28,7 +28,7 @@ npm run build         # 產出 dist/
 - `POST /schedule/getgamedatas`（整季賽程與比分）
 - `/news`（最新公告列表）
 
-部署到 GitHub 後，`.github/workflows/update-data.yml` 每天台灣時間早上 6 點自動更新資料並 commit。搭配 GitHub Pages（或任何靜態主機）即可全自動運作。
+**目前沒有自動排程。** CPBL 官網的 CDN 會擋掉來自 GitHub Actions 伺服器（微軟 Azure 機房）的請求（回傳 HTTP 404），瀏覽器直接讀取又會被 CORS 擋下（官網 API 沒有回應 CORS 標頭），所以雲端與前端都無法自動抓取。目前作法是資料變舊時，在其他能連上 CPBL 官網的環境手動執行 `npm run update-data` 後 commit + push（`.github/workflows/deploy.yml` 會自動重新部署）。`.github/workflows/update-data.yml` 保留手動觸發（workflow_dispatch）以備未來環境許可時使用，但目前用 GitHub 的雲端 runner 觸發一樣會被擋。
 
 ## 主題日（Google Sheet）
 

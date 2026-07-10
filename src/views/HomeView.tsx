@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { AttendanceRecord, CollectionItem, Game, NewsData, ThemeDay } from '../types';
-import { team } from '../data/teams';
+import { team, teamLogo } from '../data/teams';
 import { computeStats } from '../logic';
 import { daysBetween, formatDateZh, formatMoney, todayISO } from '../utils';
 import TeamBadge from '../components/TeamBadge';
@@ -61,13 +61,13 @@ function BigMatch({ g, countdown, onAction }: { g: Game; countdown: string; onAc
       </div>
       <div className="bigmatch-teams">
         <div className="bm-side" style={{ background: home.color + '1f' }}>
-          <span className="bm-logo" style={{ background: home.color, color: home.text }}>{home.short}</span>
+          <img className="bm-logo-img" src={teamLogo(g.home)} alt={home.name} />
           <span className="bm-name">{home.name}</span>
           <span className="bm-ha">主場</span>
         </div>
         <div className="bm-center">{final ? `${g.homeScore} : ${g.awayScore}` : 'VS'}</div>
         <div className="bm-side" style={{ background: away.color + '1f' }}>
-          <span className="bm-logo" style={{ background: away.color, color: away.text }}>{away.short}</span>
+          <img className="bm-logo-img" src={teamLogo(g.away)} alt={away.name} />
           <span className="bm-name">{away.name}</span>
           <span className="bm-ha">客場</span>
         </div>

@@ -25,6 +25,12 @@ export function brandOf(code: string): string {
 
 const byBrand = new Map(TEAMS.map((t) => [brandOf(t.code), t]));
 
+// 球隊 logo（放在 public/logos/，檔名為一軍代碼）；二軍代碼沿用同品牌母隊 logo。
+export function teamLogo(code: string): string {
+  const brand = byBrand.get(brandOf(code));
+  return brand ? `${import.meta.env.BASE_URL}logos/${brand.code}.webp` : '';
+}
+
 export function team(code: string): Team {
   const exact = byCode.get(code);
   if (exact) return exact;

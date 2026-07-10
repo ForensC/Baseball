@@ -22,4 +22,5 @@ if %errorlevel%==0 (
 )
 
 echo.
+if /i "%~1"=="auto" exit /b
 pause

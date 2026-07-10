@@ -32,6 +32,18 @@ npm run build         # 產出 dist/
 
 **手動更新（Windows）**：CPBL 只擋雲端機房 IP，一般家用/行動網路不受影響。在專案根目錄雙擊 [`update-data.bat`](update-data.bat)，會自動抓取最新資料並 commit + push，網站約 1-2 分鐘後自動重新部署。也可以把它拉到桌面建捷徑，或釘選到工作列，開啟更方便。
 
+**本機自動排程（Windows 工作排程器）**：開發機上已註冊排程 `YakyuTecho-CPBL-Update`，每天 06:30 與 23:00 自動執行 `update-data.bat auto`（`auto` 參數會略過結尾的按鍵等待）。電腦當時沒開的話，開機後會自動補跑（StartWhenAvailable）。換機或重建時用系統管理員以外的一般 PowerShell 執行：
+
+```powershell
+$action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c D:\Fork\Baseball\update-data.bat auto' -WorkingDirectory 'D:\Fork\Baseball'
+$t1 = New-ScheduledTaskTrigger -Daily -At 6:30am
+$t2 = New-ScheduledTaskTrigger -Daily -At 11:00pm
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
+Register-ScheduledTask -TaskName 'YakyuTecho-CPBL-Update' -Action $action -Trigger $t1,$t2 -Settings $settings
+```
+
+移除：`Unregister-ScheduledTask -TaskName 'YakyuTecho-CPBL-Update' -Confirm:$false`
+
 其他平台或想手動操作，可直接執行：
 
 ```bash

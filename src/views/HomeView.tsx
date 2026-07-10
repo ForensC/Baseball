@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
-import type { AttendanceRecord, CollectionItem, Game, NewsData, ThemeDay } from '../types';
+import type { AttendanceRecord, CollectionItem, Game, ThemeDay } from '../types';
 import { team, teamLogo } from '../data/teams';
 import { computeStats } from '../logic';
 import { daysBetween, formatDateZh, formatMoney, todayISO } from '../utils';
-import TeamBadge from '../components/TeamBadge';
 
 export type Tab = 'home' | 'calendar' | 'records' | 'collection' | 'news';
 
@@ -14,9 +13,17 @@ interface Props {
   records: AttendanceRecord[];
   items: CollectionItem[];
   favTeam: string;
-  news: NewsData | null;
   onQuickAdd: (g: Game) => void;
   onNavigate: (tab: Tab) => void;
+}
+
+function TeamMini({ code }: { code: string }) {
+  return (
+    <span className="mu">
+      <img className="mu-logo" src={teamLogo(code)} alt="" />
+      {team(code).short}
+    </span>
+  );
 }
 
 function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: () => void }) {
@@ -30,11 +37,11 @@ function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: (
     <div className="game-item">
       <div className="game-mid">
         <div className="matchup">
-          <TeamBadge code={g.home} />
+          <TeamMini code={g.home} />
           <span className={`matchup-sep ${final ? 'score' : 'vs'}`}>
             {final ? `${g.homeScore} : ${g.awayScore}` : 'vs'}
           </span>
-          <TeamBadge code={g.away} />
+          <TeamMini code={g.away} />
         </div>
         <div className="game-line2">{meta}</div>
         {(g.homePitcher || g.awayPitcher) && (
@@ -48,7 +55,7 @@ function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: (
   );
 }
 
-// 參考 BruceBaseball 的即將出賽大卡，兩側用隊色、中央 VS、下方先發投手對決
+// 參考 BruceBaseball 的即將出賽大卡：兩側用隊色與 logo、中央 VS、下方先發投手對決
 function BigMatch({ g, countdown, onAction }: { g: Game; countdown: string; onAction: () => void }) {
   const home = team(g.home);
   const away = team(g.away);
@@ -93,7 +100,28 @@ function CardHead({ title, more, onMore }: { title: string; more?: string; onMor
   );
 }
 
-export default function HomeView({ games, gamesById, themeDays, records, items, favTeam, news, onQuickAdd, onNavigate }: Props) {
+function PlanRow({ r, today }: { r: AttendanceRecord; today: string }) {
+  const d = daysBetween(today, r.date);
+  const when = d === 0 ? '今天' : d === 1 ? '明天' : `${d} 天後`;
+  const [, m, day] = r.date.split('-');
+  const wd = '日一二三四五六'[new Date(r.date + 'T00:00:00').getDay()];
+  return (
+    <div className="plan-row">
+      <div className="plan-date">
+        <div className="plan-md">{Number(m)}/{Number(day)}</div>
+        <div className="plan-wd">週{wd}</div>
+      </div>
+      <img className="plan-logo" src={teamLogo(r.myTeam)} alt="" />
+      <div className="plan-mid">
+        <div className="plan-team">{team(r.myTeam).short}{r.opponent ? ` vs ${team(r.opponent).short}` : ''}</div>
+        <div className="plan-sub">{r.stadium || '球場待定'}</div>
+      </div>
+      <div className={`plan-count ${d === 0 ? 'today' : ''}`}>{when}</div>
+    </div>
+  );
+}
+
+export default function HomeView({ games, gamesById, themeDays, records, items, favTeam, onQuickAdd, onNavigate }: Props) {
   const today = todayISO();
 
   const stats = useMemo(() => computeStats(records, gamesById), [records, gamesById]);
@@ -120,8 +148,11 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
     ? themeDays.find((t) => t.date === favNext.date && (t.team === favNext.home || t.team === favNext.away))
     : undefined;
 
-  const upcomingThemes = useMemo(() => themeDays.filter((t) => t.date >= today).slice(0, 4), [themeDays, today]);
-  const latestNews = news?.items.slice(0, 3) ?? [];
+  // 我的看球計畫：未來（含今天）的進場紀錄，依日期由近到遠
+  const plans = useMemo(
+    () => records.filter((r) => r.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6),
+    [records, today]
+  );
 
   return (
     <>
@@ -172,6 +203,15 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
       </div>
 
       <div className="card">
+        <CardHead title="我的看球計畫" more="全部" onMore={() => onNavigate('records')} />
+        {plans.length === 0 ? (
+          <div className="empty">還沒有安排看球，到賽程點「計畫進場」加一場吧！</div>
+        ) : (
+          plans.map((r) => <PlanRow key={r.id} r={r} today={today} />)
+        )}
+      </div>
+
+      <div className="card">
         <CardHead title="我的戰績" more="明細" onMore={() => onNavigate('records')} />
         <div className="stat-grid">
           <div className="stat"><div className="v">{stats.attended}</div><div className="k">進場場數</div></div>
@@ -180,39 +220,8 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
             <div className="k">我隊勝率</div>
           </div>
           <div className="stat"><div className="v">{formatMoney(grandTotal)}</div><div className="k">棒球總花費</div></div>
-          <div className="stat">
-            <div className="v">{stats.nextRecord ? `${daysBetween(today, stats.nextRecord.date)} 天` : '－'}</div>
-            <div className="k">距離下次進場</div>
-          </div>
         </div>
       </div>
-
-      {upcomingThemes.length > 0 && (
-        <div className="card">
-          <CardHead title="接下來的主題日" more="行事曆" onMore={() => onNavigate('calendar')} />
-          {upcomingThemes.map((t, i) => (
-            <div key={i} className="theme-row">
-              <span className="theme-tag" style={{ background: t.team ? team(t.team).color : 'var(--accent)', color: t.team ? team(t.team).text : '#fff' }}>
-                {t.team ? team(t.team).short : '主題日'}
-              </span>
-              <span className="theme-date">{t.date.slice(5).replace('-', '/')}</span>
-              <span className="theme-name">{t.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {latestNews.length > 0 && (
-        <div className="card">
-          <CardHead title="最新消息" more="更多" onMore={() => onNavigate('news')} />
-          {latestNews.map((n, i) => (
-            <div key={i} className="news-item">
-              <div className="news-date">{n.date}</div>
-              <a href={n.url} target="_blank" rel="noreferrer">{n.title}</a>
-            </div>
-          ))}
-        </div>
-      )}
     </>
   );
 }

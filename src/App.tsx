@@ -17,9 +17,9 @@ type Tab = 'home' | 'calendar' | 'records' | 'collection' | 'news';
 const DEFAULT_THEME_SHEET = '1KQtXauU4aeBhEADD781CA7hBLyC3F9Aj108X8Ve4TyY';
 
 const TABS: { id: Tab; label: string; ico: string }[] = [
-  { id: 'home', label: '首頁', ico: '🏠' },
   { id: 'calendar', label: '賽程', ico: '📅' },
   { id: 'records', label: '進場', ico: '🎟️' },
+  { id: 'home', label: '首頁', ico: '🏠' },
   { id: 'collection', label: '收藏', ico: '🧢' },
   { id: 'news', label: '消息', ico: '📰' },
 ];
@@ -146,7 +146,6 @@ export default function App() {
           records={records}
           items={items}
           favTeam={favTeam}
-          news={news}
           onQuickAdd={quickAddFromGame}
           onNavigate={setTab}
         />

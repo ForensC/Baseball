@@ -526,57 +526,92 @@ body {
 .cat-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
 .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 
+/* 收藏頁（設計稿：聚光展示台 Spotlight Pedestal） */
+.stat-grid.soft .stat { background: var(--accent-soft); color: var(--text); }
+.stat-grid.soft .stat .k { color: var(--muted); }
+.btn-dark {
+  width: 100%;
+  border: 0;
+  background-color: var(--text);
+  color: var(--bg);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
 .cab-group { margin-top: 20px; }
-.cab-group-head { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #8a7c5e; margin: 0 2px 12px; text-transform: none; }
-.cab-group-count { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+.cab-group-head { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #8a7c5e; margin: 0 2px 12px; }
+.cab-group-count { color: var(--muted); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
 .cab-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0 0 4px; }
 .cab-card {
   text-align: center;
   background: none;
   border: 0;
-  border-radius: 0;
-  overflow: visible;
   padding: 0;
   cursor: pointer;
   font: inherit;
   color: inherit;
 }
-.cab-img {
-  position: relative; aspect-ratio: 1 / 1;
-  background: var(--card-soft);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+.cab-stage { position: relative; height: 92px; display: flex; align-items: flex-end; justify-content: center; }
+.cab-glow { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 88px; height: 88px; border-radius: 50%; }
+.cab-emoji { position: relative; font-size: 40px; }
+.cab-shadow { width: 58px; height: 7px; background: #00000018; border-radius: 50%; margin: 0 auto; filter: blur(1.5px); }
+.cab-stage.big { height: 150px; }
+.cab-glow.big { width: 150px; height: 150px; top: -10px; }
+.cab-emoji.big { font-size: 76px; }
+.cab-shadow.big { width: 96px; height: 12px; filter: blur(2px); }
+.cab-photo {
+  margin: 0 4px;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
+  background: var(--card-soft);
+  border: 1px solid var(--text);
+  border-bottom: 0;
 }
-.cab-card:not(.has-img) .cab-img {
-  background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
-  border-radius: 0;
-  aspect-ratio: auto;
-  height: 92px;
+.cab-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cab-plaque {
+  background-color: var(--text);
+  color: var(--bg);
+  margin: 6px 4px 0;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
 }
-.cab-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.cab-ph { font-size: 40px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.cab-ph.big { aspect-ratio: 1/1; border-radius: 12px; font-size: 72px; }
-.cab-star { position: absolute; top: 6px; right: 6px; font-size: 14px; background: rgba(0,0,0,0.35); border-radius: 999px; padding: 1px 5px; }
-.cab-body { padding: 8px 4px 0; }
-.cab-card.has-img .cab-body { background: var(--text); color: var(--bg); border-radius: 0 0 10px 10px; margin-top: -4px; padding: 8px 8px 6px; }
-.cab-name { font-size: 12px; font-weight: 700; line-height: 1.3; }
-.cab-meta { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; align-items: center; justify-content: center; gap: 5px; }
-.cab-card.has-img .cab-meta { color: inherit; opacity: 0.65; }
-.cab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.cab-sig { font-size: 12px; color: #b45309; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cab-photo + .cab-plaque { margin-top: 0; }
+.cab-sub {
+  border: 1px solid var(--text);
+  border-top: 0;
+  margin: 0 4px;
+  padding: 4px;
+  font-size: 10px;
+  color: #5b5346;
+}
 
 .detail-img { width: 100%; border-radius: 12px; overflow: hidden; background: var(--card-soft); display: flex; align-items: center; justify-content: center; }
 .detail-img img { width: 100%; max-height: 60vh; object-fit: contain; display: block; }
-.detail-sig { background: #fdf1dc; color: #92400e; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin: 12px 0; text-align: center; }
-.detail-table { width: 100%; font-size: 14px; margin-top: 6px; }
-.detail-table td { padding: 9px 0; border-top: 1px solid var(--line); vertical-align: top; }
-.detail-table td:first-child { color: var(--muted); width: 84px; }
+.detail-name { text-align: center; font-size: 19px; font-weight: 800; margin-top: 16px; }
+.detail-sub { text-align: center; font-size: 11px; color: #8a7c5e; letter-spacing: 2px; margin-top: 4px; }
+.detail-sig { background: #fdf1dc; color: #92400e; border-radius: 10px; padding: 10px 12px; font-size: 12px; margin: 14px 0 0; text-align: center; }
+.detail-list { border: 1px solid var(--line); border-radius: 14px; padding: 0 16px; margin-top: 14px; }
+.detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 12px; }
+.detail-row:first-child { border-top: 0; }
+.detail-row .k { color: #8a7c5e; flex-shrink: 0; }
+.detail-row .v { font-weight: 700; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.btn-ghost.danger { border-color: var(--lose); color: var(--lose); }
+.modal-actions.three { margin-top: 18px; }
+.modal-actions.three button { flex: 1; width: auto; font-weight: 700; }
 .img-preview { margin-top: 8px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
 .img-preview img { width: 100%; max-height: 180px; object-fit: cover; display: block; }
 
 @media (prefers-color-scheme: dark) {
   .detail-sig { background: #3a2a12; color: #f0c886; }
+  .cab-sub { color: var(--muted); }
+  .cab-group-head { color: #b3a687; }
+  .detail-sub { color: #b3a687; }
 }
 
 .news-item { padding: 11px 2px; border-top: 1px solid var(--line); }

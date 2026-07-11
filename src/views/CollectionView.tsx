@@ -87,24 +87,25 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
     return order.filter((k) => m.has(k)).map((k) => ({ key: k, items: m.get(k)! }));
   }, [shown]);
 
+  // 設計稿「聚光展示台」：有圖用相框照片、無圖用聚光燈+emoji 底座，下方黑色名牌與展籤
   const renderCard = (i: CollectionItem) => {
     const img = displayImage(i.imageUrl, 600);
     const treasured = isTreasured(i);
     return (
-      <button key={i.id} className={`cab-card ${img ? 'has-img' : ''} ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
-        <div className="cab-img">
-          {img ? (
-            <img src={img} alt={i.name} loading="lazy" />
-          ) : (
-            <span className="cab-ph" style={{ background: catColor(i.category) + '22', color: catColor(i.category) }}>{CAT_EMOJI[i.category] || '📦'}</span>
-          )}
-          {treasured && <span className="cab-star">⭐</span>}
-        </div>
-        <div className="cab-body">
-          <div className="cab-name">{i.name}</div>
-          <div className="cab-meta">{i.date.replaceAll('-', '/')}</div>
-          {treasured && <div className="cab-sig">{i.significance}</div>}
-        </div>
+      <button key={i.id} className="cab-card" onClick={() => setViewing(i)}>
+        {img ? (
+          <div className="cab-photo"><img src={img} alt={i.name} loading="lazy" /></div>
+        ) : (
+          <>
+            <div className="cab-stage">
+              <div className="cab-glow" style={{ background: `radial-gradient(circle, ${catColor(i.category)}33 0%, transparent 70%)` }} />
+              <span className="cab-emoji">{CAT_EMOJI[i.category] || '📦'}</span>
+            </div>
+            <div className="cab-shadow" />
+          </>
+        )}
+        <div className="cab-plaque">{i.name}{treasured ? ' ⭐' : ''}</div>
+        <div className="cab-sub">{i.team ? team(i.team).short : '未分類'} · {i.date.replaceAll('-', '/')}</div>
       </button>
     );
   };
@@ -113,7 +114,7 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
     <>
       <div className="card">
         <h2>我的收藏櫃</h2>
-        <div className="stat-grid">
+        <div className="stat-grid soft">
           <div className="stat"><div className="v">{items.length}</div><div className="k">收藏件數</div></div>
           <div className="stat"><div className="v">{formatMoney(collectionTotal)}</div><div className="k">收藏總值</div></div>
           <div className="stat"><div className="v">{formatMoney(collectionTotal + ticketTotal)}</div><div className="k">含門票合計</div></div>
@@ -122,17 +123,17 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
 
       {items.length > 0 && (
         <div className="chip-row">
-          <button className={`chip ${filter === '' ? 'active' : ''}`} style={filter === '' ? { background: 'var(--accent)', color: '#fff' } : undefined} onClick={() => setFilter('')}>全部</button>
+          <button className={`chip ${filter === '' ? 'active' : ''}`} style={filter === '' ? { background: 'var(--text)', color: 'var(--bg)' } : undefined} onClick={() => setFilter('')}>全部</button>
           {treasuredCount > 0 && (
-            <button className={`chip ${filter === '__t' ? 'active' : ''}`} style={filter === '__t' ? { background: '#b45309', color: '#fff' } : undefined} onClick={() => setFilter('__t')}>⭐ 珍藏 {treasuredCount}</button>
+            <button className={`chip ${filter === '__t' ? 'active' : ''}`} style={filter === '__t' ? { background: 'var(--gold)', color: 'var(--gold-text)' } : undefined} onClick={() => setFilter('__t')}>⭐ 珍藏 {treasuredCount}</button>
           )}
           {cats.map((c) => (
-            <button key={c} className={`chip ${filter === c ? 'active' : ''}`} style={filter === c ? { background: catColor(c), color: '#fff' } : undefined} onClick={() => setFilter(c)}>{c}</button>
+            <button key={c} className={`chip ${filter === c ? 'active' : ''}`} style={filter === c ? { background: catColor(c), color: '#fff' } : undefined} onClick={() => setFilter(c)}>{CAT_EMOJI[c] || ''} {c}</button>
           ))}
         </div>
       )}
 
-      <button className="btn-primary" onClick={() => setEditing('new')}>＋ 新增收藏品</button>
+      <button className="btn-dark" onClick={() => setEditing('new')}>＋ 新增收藏品</button>
 
       {items.length === 0 ? (
         <div className="card"><div className="empty">收藏櫃還是空的，把你的球衣、簽名球、應援小物加進來吧！</div></div>
@@ -142,9 +143,8 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
         groups.map((g) => (
           <div key={g.key} className="cab-group">
             <div className="cab-group-head">
-              <span className="cab-dot" style={{ background: g.key === '__none' ? 'var(--muted)' : team(g.key).color }} />
-              {g.key === '__none' ? '未分類' : team(g.key).name}
-              <span className="cab-group-count">{g.items.length} 件</span>
+              {g.key === '__none' ? '未分類展區' : `${team(g.key).name}展區`}
+              <span className="cab-group-count">· {g.items.length} 件</span>
             </div>
             <div className="cab-grid">{g.items.map(renderCard)}</div>
           </div>
@@ -177,26 +177,33 @@ function DetailModal({ item, onEdit, onDelete, onClose }: {
   return (
     <div className="modal-mask" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="detail-img">
-          {img ? <img src={img} alt={item.name} /> : <span className="cab-ph big" style={{ background: catColor(item.category) + '22', color: catColor(item.category) }}>{CAT_EMOJI[item.category] || '📦'}</span>}
-        </div>
-        <h3 style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {treasured && <span aria-label="珍藏">⭐</span>}{item.name}
-        </h3>
+        {img ? (
+          <div className="detail-img"><img src={img} alt={item.name} /></div>
+        ) : (
+          <>
+            <div className="cab-stage big">
+              <div className="cab-glow big" style={{ background: `radial-gradient(circle, ${catColor(item.category)}33 0%, transparent 70%)` }} />
+              <span className="cab-emoji big">{CAT_EMOJI[item.category] || '📦'}</span>
+            </div>
+            <div className="cab-shadow big" />
+          </>
+        )}
+        <div className="detail-name">{item.name}{treasured ? ' ⭐' : ''}</div>
+        {item.team && (
+          <div className="detail-sub">{team(item.team).name} · {item.category}</div>
+        )}
         {treasured && (
           <div className="detail-sig">紀念價值：{item.significance}</div>
         )}
-        <table className="detail-table">
-          <tbody>
-            {rows.map(([k, v]) => (
-              <tr key={k}><td>{k}</td><td>{v}</td></tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="modal-actions">
-          <button className="btn-ghost" onClick={onDelete} style={{ color: 'var(--lose)' }}>刪除</button>
+        <div className="detail-list">
+          {rows.map(([k, v]) => (
+            <div key={k} className="detail-row"><span className="k">{k}</span><span className="v">{v}</span></div>
+          ))}
+        </div>
+        <div className="modal-actions three">
+          <button className="btn-ghost danger" onClick={onDelete}>刪除</button>
           <button className="btn-ghost" onClick={onClose}>關閉</button>
-          <button className="btn-primary" onClick={onEdit}>編輯</button>
+          <button className="btn-dark" onClick={onEdit}>編輯</button>
         </div>
       </div>
     </div>

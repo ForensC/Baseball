@@ -175,14 +175,8 @@ body {
   margin-bottom: 8px;
 }
 
-.bigmatch {
-  position: relative;
-  margin: -16px -16px -26px;
-  padding: 18px 18px 30px;
-  border-radius: var(--radius) var(--radius) 0 0;
-  background: radial-gradient(circle at 88% -20%, rgba(217, 178, 92, 0.2) 0%, transparent 45%), linear-gradient(160deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent) 100%);
-  color: #fff;
-}
+.bigmatch-card.card { padding-bottom: 40px; margin-bottom: 0; }
+.bigmatch { color: #fff; }
 .bigmatch-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .bm-status { background: var(--gold); color: var(--gold-text); font-weight: 800; font-size: 13px; padding: 6px 14px; border-radius: 999px; }
 .bm-when { color: #cfe4d8; font-size: 12px; font-weight: 600; }
@@ -224,7 +218,7 @@ body {
 }
 .bm-cta {
   position: relative; z-index: 2;
-  margin: 0 4px 4px;
+  margin: -34px 16px 12px;
   background: var(--card);
   border-radius: 16px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);

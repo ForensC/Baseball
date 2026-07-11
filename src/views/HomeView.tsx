@@ -56,7 +56,7 @@ function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: (
 }
 
 // 參考 BruceBaseball 的即將出賽大卡：兩側用隊色與 logo、中央 VS、下方先發投手對決
-function BigMatch({ g, countdown, onAction }: { g: Game; countdown: string; onAction: () => void }) {
+function BigMatch({ g, countdown }: { g: Game; countdown: string }) {
   const home = team(g.home);
   const away = team(g.away);
   const final = g.status === 'final' && g.homeScore !== null && g.awayScore !== null;
@@ -170,23 +170,24 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
 
       {favTeam ? (
         favNext && (
-          <div className="card">
-            <CardHead title={`${team(favTeam).short}的下一場`} more="賽程" onMore={() => onNavigate('calendar')} />
-            <BigMatch
-              g={favNext}
-              countdown={favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
-              onAction={() => onQuickAdd(favNext)}
-            />
+          <>
+            <div className="card hero-card bigmatch-card">
+              <CardHead title={`${team(favTeam).short}的下一場`} more="賽程" onMore={() => onNavigate('calendar')} />
+              <BigMatch
+                g={favNext}
+                countdown={favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
+              />
+            </div>
             <BigMatchCta onAction={() => onQuickAdd(favNext)} />
             {favTheme && (
-              <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)', marginTop: 10 }}>
+              <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)' }}>
                 <span className="theme-tag" style={{ background: favTheme.team ? team(favTheme.team).color : 'var(--accent)', color: favTheme.team ? team(favTheme.team).text : '#fff' }}>
                   {favTheme.team ? team(favTheme.team).short : '主題日'}
                 </span>
                 <span>🎉 {favTheme.name}</span>
               </div>
             )}
-          </div>
+          </>
         )
       ) : (
         <div className="card">

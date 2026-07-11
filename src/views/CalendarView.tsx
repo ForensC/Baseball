@@ -1,17 +1,15 @@
 import { useMemo, useState } from 'react';
 import type { AttendanceRecord, Game, ThemeDay } from '../types';
-import { TEAMS, team, brandOf } from '../data/teams';
+import { TEAMS, team, teamLogo, brandOf } from '../data/teams';
 import { todayISO } from '../utils';
 
-function TeamCircle({ code, light }: { code: string; light?: boolean }) {
-  const t = team(code);
+// 賽程賽事的隊伍顯示：logo + 隊名（與首頁一致）
+function TeamSide({ code }: { code: string }) {
   return (
-    <span
-      className="team-circle"
-      style={light ? { background: '#fff', color: t.color } : { background: t.color, color: t.text }}
-    >
-      {t.short}
-    </span>
+    <div className="gb-team">
+      <img className="gb-logo" src={teamLogo(code)} alt="" />
+      <span className="gb-team-name">{team(code).short}</span>
+    </div>
   );
 }
 
@@ -26,7 +24,7 @@ interface Props {
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
-export default function CalendarView({ games, records, favTeam, themeDays, onQuickAdd, updatedAt }: Props) {
+export default function CalendarView({ games, records, themeDays, onQuickAdd, updatedAt }: Props) {
   const today = todayISO();
   const [ym, setYm] = useState(today.slice(0, 7));
   const [selected, setSelected] = useState(today);
@@ -180,11 +178,11 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
           return (
             <div key={g.id} className="game-block">
               <div className="gb-match">
-                <TeamCircle code={g.home} />
+                <TeamSide code={g.home} />
                 <span className={`gb-sep ${final ? 'score' : ''}`}>
                   {final ? `${g.homeScore} : ${g.awayScore}` : 'vs'}
                 </span>
-                <TeamCircle code={g.away} />
+                <TeamSide code={g.away} />
               </div>
               <div className="gb-meta">{meta}</div>
               {(g.homePitcher || g.awayPitcher) && (
@@ -198,39 +196,9 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
         })}
       </div>
 
-      {favTeam && (
-        <NextFavGame games={games} favTeam={favTeam} onQuickAdd={onQuickAdd} />
-      )}
       {updatedAt && (
         <p className="section-note">賽程資料來源：CPBL 官網，更新於 {updatedAt.slice(0, 16).replace('T', ' ')}</p>
       )}
     </>
-  );
-}
-
-function NextFavGame({ games, favTeam, onQuickAdd }: { games: Game[]; favTeam: string; onQuickAdd: (g: Game) => void }) {
-  const today = todayISO();
-  const next = games
-    .filter((g) => g.date >= today && g.status === 'scheduled' && (g.home === favTeam || g.away === favTeam))
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
-  if (!next) return null;
-  return (
-    <div className="card fav-next-card">
-      <h2>{team(favTeam).short}的下一場比賽</h2>
-      <div className="gb-match">
-        <TeamCircle code={next.home} light />
-        <span className="gb-sep gold">VS</span>
-        <TeamCircle code={next.away} />
-      </div>
-      <div className="gb-meta">
-        {next.date.replaceAll('-', '/')} {next.time} · {next.stadium} · {team(next.home).short}主場
-      </div>
-      {(next.homePitcher || next.awayPitcher) && (
-        <div className="gb-pitchers">
-          <span className="ptag ptag-light">先發</span>{next.homePitcher || '未定'} vs {next.awayPitcher || '未定'}
-        </div>
-      )}
-      <button className="gb-btn gold" onClick={() => onQuickAdd(next)}>計畫進場</button>
-    </div>
   );
 }

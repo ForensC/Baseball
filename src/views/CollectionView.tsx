@@ -133,7 +133,7 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
         </div>
       )}
 
-      <button className="btn-dark" onClick={() => setEditing('new')}>＋ 新增收藏品</button>
+      <button className="btn-primary" onClick={() => setEditing('new')}>＋ 新增收藏品</button>
 
       {items.length === 0 ? (
         <div className="card"><div className="empty">收藏櫃還是空的，把你的球衣、簽名球、應援小物加進來吧！</div></div>
@@ -203,7 +203,7 @@ function DetailModal({ item, onEdit, onDelete, onClose }: {
         <div className="modal-actions three">
           <button className="btn-ghost danger" onClick={onDelete}>刪除</button>
           <button className="btn-ghost" onClick={onClose}>關閉</button>
-          <button className="btn-dark" onClick={onEdit}>編輯</button>
+          <button className="btn-primary" onClick={onEdit}>編輯</button>
         </div>
       </div>
     </div>

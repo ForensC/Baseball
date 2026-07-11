@@ -67,13 +67,13 @@ function BigMatch({ g, countdown }: { g: Game; countdown: string }) {
         <span className="bm-when">{g.date.slice(5).replace('-', '/')}（{'日一二三四五六'[new Date(g.date + 'T00:00:00').getDay()]}）{g.time} · {g.stadium}</span>
       </div>
       <div className="bigmatch-teams">
-        <div className="bm-side" style={{ background: home.color + '1f' }}>
+        <div className="bm-side">
           <img className="bm-logo-img" src={teamLogo(g.home)} alt={home.name} />
           <span className="bm-name">{home.name}</span>
           <span className="bm-ha">主場</span>
         </div>
         <div className="bm-center">{final ? `${g.homeScore} : ${g.awayScore}` : 'VS'}</div>
-        <div className="bm-side" style={{ background: away.color + '1f' }}>
+        <div className="bm-side">
           <img className="bm-logo-img" src={teamLogo(g.away)} alt={away.name} />
           <span className="bm-name">{away.name}</span>
           <span className="bm-ha">客場</span>

@@ -224,11 +224,6 @@ body {
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
   padding: 6px;
 }
-.bm-cta .btn-primary {
-  background: var(--gold);
-  color: var(--gold-text);
-}
-
 .theme-row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
 .theme-row:first-of-type { border-top: 0; }
 .theme-date { color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
@@ -399,17 +394,12 @@ body {
   margin-bottom: 10px;
 }
 .game-block:last-child { margin-bottom: 0; }
-.gb-match { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.team-circle {
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800;
-  flex-shrink: 0;
-}
+.gb-match { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.gb-team { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; min-width: 64px; }
+.gb-logo { width: 40px; height: 40px; object-fit: contain; }
+.gb-team-name { font-size: 13px; font-weight: 700; }
 .gb-sep { font-size: 15px; color: var(--muted); font-weight: 800; font-variant-numeric: tabular-nums; }
 .gb-sep.score { color: var(--text); }
-.gb-sep.gold { color: var(--gold); font-size: 13px; }
 .gb-meta { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; }
 .gb-pitchers { text-align: center; font-size: 12px; margin-top: 6px; }
 .gb-btn {
@@ -424,13 +414,6 @@ body {
   font-weight: 800;
   cursor: pointer;
 }
-.gb-btn.gold { background-color: var(--gold); color: var(--gold-text); }
-
-/* 賽程頁：主隊下一場深綠卡（設計稿 favNext 樣式） */
-.fav-next-card.card { background-color: var(--accent); border-color: transparent; color: #fff; }
-.fav-next-card h2 { color: #fff; font-weight: 800; margin-bottom: 12px; }
-.fav-next-card .gb-meta { color: #cfe4d8; }
-.fav-next-card .gb-pitchers { color: #fff; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .stat {
@@ -461,11 +444,12 @@ body {
 .rec-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 .rec-price { font-weight: 700; font-size: 13px; white-space: nowrap; }
 
+/* 全站統一主要 CTA：金色 */
 .btn-primary {
   width: 100%;
   border: 0;
-  background: var(--accent);
-  color: #fff;
+  background-color: var(--gold);
+  color: var(--gold-text);
   border-radius: 13px;
   padding: 13px;
   font-size: 15px;
@@ -529,18 +513,6 @@ body {
 /* 收藏頁（設計稿：聚光展示台 Spotlight Pedestal） */
 .stat-grid.soft .stat { background: var(--accent-soft); color: var(--text); }
 .stat-grid.soft .stat .k { color: var(--muted); }
-.btn-dark {
-  width: 100%;
-  border: 0;
-  background-color: var(--text);
-  color: var(--bg);
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-}
 
 .cab-group { margin-top: 20px; }
 .cab-group-head { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #8a7c5e; margin: 0 2px 12px; }

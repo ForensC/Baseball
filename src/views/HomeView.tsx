@@ -80,13 +80,18 @@ function BigMatch({ g, countdown, onAction }: { g: Game; countdown: string; onAc
         </div>
       </div>
       {(g.homePitcher || g.awayPitcher) && (
-        <div className="bm-pitchers">
-          <span className="bm-p">{g.homePitcher || '先發未定'}</span>
-          <span className="bm-plabel">先發投手</span>
-          <span className="bm-p">{g.awayPitcher || '先發未定'}</span>
+        <div className="bm-pitchers-line">
+          <span className="ptag ptag-light">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
         </div>
       )}
-      <button className="btn-primary" style={{ marginTop: 12 }} onClick={onAction}>計畫進場</button>
+    </div>
+  );
+}
+
+function BigMatchCta({ onAction }: { onAction: () => void }) {
+  return (
+    <div className="bm-cta">
+      <button className="btn-primary" onClick={onAction}>計畫進場</button>
     </div>
   );
 }
@@ -172,6 +177,7 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
               countdown={favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
               onAction={() => onQuickAdd(favNext)}
             />
+            <BigMatchCta onAction={() => onQuickAdd(favNext)} />
             {favTheme && (
               <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)', marginTop: 10 }}>
                 <span className="theme-tag" style={{ background: favTheme.team ? team(favTheme.team).color : 'var(--accent)', color: favTheme.team ? team(favTheme.team).text : '#fff' }}>

@@ -177,8 +177,8 @@ body {
 
 .bigmatch {
   position: relative;
-  margin: -16px -16px -22px;
-  padding: 18px 18px 34px;
+  margin: -16px -16px -26px;
+  padding: 18px 18px 30px;
   border-radius: var(--radius) var(--radius) 0 0;
   background: radial-gradient(circle at 88% -20%, rgba(217, 178, 92, 0.2) 0%, transparent 45%), linear-gradient(160deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent) 100%);
   color: #fff;
@@ -203,20 +203,37 @@ body {
 .bm-name { font-size: 13px; font-weight: 700; text-align: center; line-height: 1.3; }
 .bm-ha { font-size: 11px; color: #cfe4d8; }
 .bm-center { display: flex; align-items: center; font-weight: 800; font-size: 26px; flex-shrink: 0; color: #fff; font-variant-numeric: tabular-nums; }
-.bm-pitchers {
-  margin: -22px 14px 0;
+.bm-pitchers-line {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.ptag-light {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 11px;
+  margin-right: 6px;
+  font-weight: 700;
+}
+.bm-cta {
   position: relative; z-index: 2;
+  margin: 0 4px 4px;
   background: var(--card);
-  color: var(--text);
   border-radius: 16px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
-  padding: 12px 14px;
-  border-top: 0;
+  padding: 6px;
 }
-.bm-p { flex: 1; text-align: center; font-size: 12px; font-weight: 700; }
-.bm-plabel { font-size: 10px; color: var(--muted); padding: 0 8px; white-space: nowrap; font-weight: 600; }
-.bm-pitchers-row { display: flex; align-items: center; margin-bottom: 10px; }
-.bm-pitchers .btn-primary { width: 100%; margin-top: 0; }
+.bm-cta .btn-primary {
+  background: var(--gold);
+  color: var(--gold-text);
+}
 
 .theme-row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
 .theme-row:first-of-type { border-top: 0; }

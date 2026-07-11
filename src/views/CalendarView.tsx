@@ -2,7 +2,18 @@ import { useMemo, useState } from 'react';
 import type { AttendanceRecord, Game, ThemeDay } from '../types';
 import { TEAMS, team, brandOf } from '../data/teams';
 import { todayISO } from '../utils';
-import TeamBadge from '../components/TeamBadge';
+
+function TeamCircle({ code, light }: { code: string; light?: boolean }) {
+  const t = team(code);
+  return (
+    <span
+      className="team-circle"
+      style={light ? { background: '#fff', color: t.color } : { background: t.color, color: t.text }}
+    >
+      {t.short}
+    </span>
+  );
+}
 
 interface Props {
   games: Game[];
@@ -135,8 +146,8 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
         </div>
         {ym !== today.slice(0, 7) && (
           <button
-            className="btn-sm"
-            style={{ marginTop: 8 }}
+            className="btn-outline-sm"
+            style={{ marginTop: 10 }}
             onClick={() => { setYm(today.slice(0, 7)); setSelected(today); }}
           >
             回到今天
@@ -167,23 +178,21 @@ export default function CalendarView({ games, records, favTeam, themeDays, onQui
             `${team(g.home).short}主場`,
           ].join(' · ');
           return (
-            <div key={g.id} className="game-item">
-              <div className="game-mid">
-                <div className="matchup">
-                  <TeamBadge code={g.home} />
-                  <span className={`matchup-sep ${final ? 'score' : 'vs'}`}>
-                    {final ? `${g.homeScore} : ${g.awayScore}` : 'vs'}
-                  </span>
-                  <TeamBadge code={g.away} />
-                </div>
-                <div className="game-line2">{meta}</div>
-                {(g.homePitcher || g.awayPitcher) && (
-                  <div className="pitcher-line">
-                    <span className="ptag">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
-                  </div>
-                )}
+            <div key={g.id} className="game-block">
+              <div className="gb-match">
+                <TeamCircle code={g.home} />
+                <span className={`gb-sep ${final ? 'score' : ''}`}>
+                  {final ? `${g.homeScore} : ${g.awayScore}` : 'vs'}
+                </span>
+                <TeamCircle code={g.away} />
               </div>
-              <button className="btn-sm" onClick={() => onQuickAdd(g)}>記進場</button>
+              <div className="gb-meta">{meta}</div>
+              {(g.homePitcher || g.awayPitcher) && (
+                <div className="gb-pitchers">
+                  <span className="ptag">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
+                </div>
+              )}
+              <button className="gb-btn" onClick={() => onQuickAdd(g)}>記進場</button>
             </div>
           );
         })}
@@ -206,26 +215,22 @@ function NextFavGame({ games, favTeam, onQuickAdd }: { games: Game[]; favTeam: s
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
   if (!next) return null;
   return (
-    <div className="card">
+    <div className="card fav-next-card">
       <h2>{team(favTeam).short}的下一場比賽</h2>
-      <div className="game-item">
-        <div className="game-mid">
-          <div className="matchup">
-            <TeamBadge code={next.home} />
-            <span className="matchup-sep vs">vs</span>
-            <TeamBadge code={next.away} />
-          </div>
-          <div className="game-line2">
-            {next.date.replaceAll('-', '/')} {next.time} · {next.stadium} · {team(next.home).short}主場
-          </div>
-          {(next.homePitcher || next.awayPitcher) && (
-            <div className="pitcher-line">
-              <span className="ptag">先發</span>{next.homePitcher || '未定'} vs {next.awayPitcher || '未定'}
-            </div>
-          )}
-        </div>
-        <button className="btn-sm" onClick={() => onQuickAdd(next)}>計畫進場</button>
+      <div className="gb-match">
+        <TeamCircle code={next.home} light />
+        <span className="gb-sep gold">VS</span>
+        <TeamCircle code={next.away} />
       </div>
+      <div className="gb-meta">
+        {next.date.replaceAll('-', '/')} {next.time} · {next.stadium} · {team(next.home).short}主場
+      </div>
+      {(next.homePitcher || next.awayPitcher) && (
+        <div className="gb-pitchers">
+          <span className="ptag ptag-light">先發</span>{next.homePitcher || '未定'} vs {next.awayPitcher || '未定'}
+        </div>
+      )}
+      <button className="gb-btn gold" onClick={() => onQuickAdd(next)}>計畫進場</button>
     </div>
   );
 }

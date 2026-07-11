@@ -16,12 +16,40 @@ type Tab = 'home' | 'calendar' | 'records' | 'collection' | 'news';
 // 使用者可在「進場」分頁的設定欄位貼上自己的 Sheet 覆蓋。
 const DEFAULT_THEME_SHEET = '1KQtXauU4aeBhEADD781CA7hBLyC3F9Aj108X8Ve4TyY';
 
-const TABS: { id: Tab; label: string; ico: string }[] = [
-  { id: 'calendar', label: '賽程', ico: '📅' },
-  { id: 'records', label: '進場', ico: '🎟️' },
-  { id: 'home', label: '首頁', ico: '🏠' },
-  { id: 'collection', label: '收藏', ico: '🧢' },
-  { id: 'news', label: '消息', ico: '📰' },
+const TAB_ICONS: Record<Tab, JSX.Element> = {
+  home: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5L10 4l7 5.5" /><path d="M5 8.5V16h10V8.5" /><path d="M8 16v-4h4v4" />
+    </svg>
+  ),
+  calendar: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4.5" width="14" height="12" rx="2.2" /><path d="M3 8.5h14" /><path d="M7 3v3" /><path d="M13 3v3" />
+    </svg>
+  ),
+  records: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16V11" /><path d="M10 16V6" /><path d="M15.5 16V9" />
+    </svg>
+  ),
+  collection: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 3l7 3.5-7 3.5-7-3.5 7-3.5z" /><path d="M3 10.5l7 3.5 7-3.5" /><path d="M3 14l7 3.5 7-3.5" />
+    </svg>
+  ),
+  news: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="14" height="12" rx="1.5" /><path d="M6 7.5h8" /><path d="M6 10h8" /><path d="M6 12.5h5" />
+    </svg>
+  ),
+};
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'calendar', label: '賽程' },
+  { id: 'records', label: '進場' },
+  { id: 'home', label: '首頁' },
+  { id: 'collection', label: '收藏' },
+  { id: 'news', label: '消息' },
 ];
 
 export default function App() {
@@ -134,8 +162,11 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>野球手帳</h1>
-        <span className="sub">CPBL 追賽紀錄</span>
+        <span className="app-logo">野</span>
+        <div>
+          <h1>野球手帳</h1>
+          <span className="sub">CPBL 追賽紀錄</span>
+        </div>
       </header>
 
       {tab === 'home' && (
@@ -194,9 +225,9 @@ export default function App() {
       <nav className="tabbar">
         <div className="tabbar-inner">
           {TABS.map((t) => (
-            <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-              <span className="ico">{t.ico}</span>
-              {t.label}
+            <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)} aria-label={t.label}>
+              <span className="ico">{TAB_ICONS[t.id]}</span>
+              <span className="label">{t.label}</span>
             </button>
           ))}
         </div>

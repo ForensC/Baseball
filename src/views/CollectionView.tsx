@@ -91,7 +91,7 @@ export default function CollectionView({ items, setItems, records, themeDays }: 
     const img = displayImage(i.imageUrl, 600);
     const treasured = isTreasured(i);
     return (
-      <button key={i.id} className={`cab-card ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
+      <button key={i.id} className={`cab-card ${img ? 'has-img' : ''} ${treasured ? 'treasured' : ''}`} onClick={() => setViewing(i)}>
         <div className="cab-img">
           {img ? (
             <img src={img} alt={i.name} loading="lazy" />

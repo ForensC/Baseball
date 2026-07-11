@@ -53,16 +53,23 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
 
   return (
     <>
-      <div className="card">
+      <div className="card hero-card">
         <h2>我的進場戰績</h2>
-        <div className="stat-grid">
-          <div className="stat"><div className="v">{stats.attended}</div><div className="k">進場場數</div></div>
-          <div className="stat">
-            <div className="v">{stats.winRate === null ? '－' : `${Math.round(stats.winRate * 100)}%`}</div>
-            <div className="k">我隊勝率 {stats.wins}勝{stats.losses}敗{stats.draws > 0 ? `${stats.draws}和` : ''}</div>
+        <div className="hero-top">
+          <div className="hero-label">我隊勝率</div>
+          <div className="hero-num">{stats.winRate === null ? '－' : `${Math.round(stats.winRate * 100)}%`}</div>
+          <div className="hero-detail">
+            <span>{stats.wins} 勝</span><span>{stats.losses} 敗</span>{stats.draws > 0 && <span>{stats.draws} 和</span>}
           </div>
-          <div className="stat"><div className="v">{stats.stadiums}</div><div className="k">去過的球場</div></div>
-          <div className="stat"><div className="v">{formatMoney(stats.ticketTotal)}</div><div className="k">門票總花費</div></div>
+        </div>
+      </div>
+      <div className="hero-float">
+        <div className="stat"><div className="v">{stats.attended}</div><div className="k">進場場數</div></div>
+        <div className="stat"><div className="v">{stats.stadiums}</div><div className="k">去過的球場</div></div>
+        <div className="stat"><div className="v">{formatMoney(stats.ticketTotal)}</div><div className="k">門票花費</div></div>
+      </div>
+      <div className="card" style={{ marginTop: 0 }}>
+        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
           <div className="stat">
             <div className="v">{stats.avgPrice === null ? '－' : formatMoney(stats.avgPrice)}</div>
             <div className="k">平均票價</div>

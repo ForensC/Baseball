@@ -29,6 +29,12 @@ const RESULT_STYLE: Record<RecordResult | 'plan', { label: string; color: string
   plan: { label: '將', color: 'var(--plan)' },
 };
 
+// 結果快速篩選的顯示順序與標籤（比戰績圓標的單字更清楚）
+const RESULT_ORDER: (RecordResult | 'plan')[] = ['win', 'lose', 'draw', 'pending', 'plan'];
+const RESULT_FILTER_LABEL: Record<RecordResult | 'plan', string> = {
+  win: '勝', lose: '敗', draw: '和', pending: '未定', plan: '計畫',
+};
+
 export default function RecordsView({ records, gamesById, favTeam, onFavTeam, onAdd, onEdit, onDelete, themeSheet, onThemeSheet, themeStatus, cloudUrl, onCloudUrl, syncState }: Props) {
   const today = todayISO();
   const stats = computeStats(records, gamesById);
@@ -46,6 +52,53 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
     () => records.filter((r) => r.date.slice(0, 4) === activeYear).sort((a, b) => b.date.localeCompare(a.date)),
     [records, activeYear]
   );
+
+  // 結果快速篩選：紀錄較多時才出現，避免少量紀錄時畫面太雜
+  const resOf = (r: AttendanceRecord): RecordResult | 'plan' => (r.date > today ? 'plan' : deriveResult(r, gamesById));
+  const resultsPresent = new Set(shownRecords.map(resOf));
+  const availableResults = RESULT_ORDER.filter((k) => resultsPresent.has(k));
+  const showResultFilter = shownRecords.length >= 8 && availableResults.length > 1;
+  const [resultFilter, setResultFilter] = useState<RecordResult | 'plan' | ''>('');
+  const appliedResult = showResultFilter && resultFilter && resultsPresent.has(resultFilter) ? resultFilter : '';
+  const filteredRecords = appliedResult ? shownRecords.filter((r) => resOf(r) === appliedResult) : shownRecords;
+
+  // 同一年跨多月時用月份分段
+  const monthGroups: { month: string; items: AttendanceRecord[] }[] = [];
+  for (const r of filteredRecords) {
+    const m = r.date.slice(0, 7);
+    const last = monthGroups[monthGroups.length - 1];
+    if (last && last.month === m) last.items.push(r);
+    else monthGroups.push({ month: m, items: [r] });
+  }
+
+  const renderRow = (r: AttendanceRecord) => {
+    const s = RESULT_STYLE[resOf(r)];
+    return (
+      <div key={r.id} className="rec-item">
+        <span className="result-pill" style={{ background: s.color }}>{s.label}</span>
+        <div className="rec-mid">
+          <div className="rec-title">
+            {formatDateZh(r.date)}｜{team(r.myTeam).short}
+            {r.opponent ? ` vs ${team(r.opponent).short}` : ''}
+          </div>
+          <div className="rec-sub">
+            {[r.stadium, r.seat, r.note].filter(Boolean).join('｜') || '－'}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="rec-price">{r.price > 0 ? formatMoney(r.price) : ''}</div>
+          <button className="icon-btn" onClick={() => onEdit(r)} aria-label="編輯">✏️</button>
+          <button
+            className="icon-btn"
+            onClick={() => { if (confirm('確定刪除這筆進場紀錄？')) onDelete(r.id); }}
+            aria-label="刪除"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const doExport = () => {
     const blob = new Blob([exportBackup()], { type: 'application/json' });
@@ -105,7 +158,7 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
       <div className="card">
         <h2>進場紀錄{years.length ? ` · ${activeYear}` : ''}（{shownRecords.length}）</h2>
         {years.length > 1 && (
-          <div className="chip-row" style={{ marginBottom: 6 }}>
+          <div className="chip-row" style={{ marginBottom: showResultFilter ? 2 : 6 }}>
             {years.map((y) => (
               <button
                 key={y}
@@ -118,36 +171,39 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
             ))}
           </div>
         )}
+        {showResultFilter && (
+          <div className="chip-row" style={{ marginBottom: 6 }}>
+            <button
+              className={`chip ${appliedResult === '' ? 'active' : ''}`}
+              style={appliedResult === '' ? { background: 'var(--text)', color: 'var(--bg)' } : undefined}
+              onClick={() => setResultFilter('')}
+            >
+              全部
+            </button>
+            {availableResults.map((k) => (
+              <button
+                key={k}
+                className={`chip ${appliedResult === k ? 'active' : ''}`}
+                style={appliedResult === k ? { background: RESULT_STYLE[k].color, color: '#fff' } : undefined}
+                onClick={() => setResultFilter(k)}
+              >
+                {RESULT_FILTER_LABEL[k]}
+              </button>
+            ))}
+          </div>
+        )}
         {records.length === 0 && <div className="empty">還沒有紀錄，看完球回來記一筆吧！</div>}
-        {shownRecords.map((r) => {
-          const res = r.date > today ? 'plan' : deriveResult(r, gamesById);
-          const s = RESULT_STYLE[res];
-          return (
-            <div key={r.id} className="rec-item">
-              <span className="result-pill" style={{ background: s.color }}>{s.label}</span>
-              <div className="rec-mid">
-                <div className="rec-title">
-                  {formatDateZh(r.date)}｜{team(r.myTeam).short}
-                  {r.opponent ? ` vs ${team(r.opponent).short}` : ''}
-                </div>
-                <div className="rec-sub">
-                  {[r.stadium, r.seat, r.note].filter(Boolean).join('｜') || '－'}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="rec-price">{r.price > 0 ? formatMoney(r.price) : ''}</div>
-                <button className="icon-btn" onClick={() => onEdit(r)} aria-label="編輯">✏️</button>
-                <button
-                  className="icon-btn"
-                  onClick={() => { if (confirm('確定刪除這筆進場紀錄？')) onDelete(r.id); }}
-                  aria-label="刪除"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        {appliedResult && filteredRecords.length === 0 && (
+          <div className="empty">這個年度沒有「{RESULT_FILTER_LABEL[appliedResult]}」的紀錄</div>
+        )}
+        {monthGroups.map((grp) => (
+          <div key={grp.month}>
+            {monthGroups.length > 1 && (
+              <div className="rec-month">{Number(grp.month.slice(5))} 月<span className="rec-month-count">{grp.items.length} 場</span></div>
+            )}
+            {grp.items.map(renderRow)}
+          </div>
+        ))}
       </div>
 
       <div className="card">

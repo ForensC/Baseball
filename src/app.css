@@ -430,6 +430,8 @@ body {
 .stat-grid .stat:nth-child(3n+2) { background: var(--gold); color: var(--gold-text); }
 .stat-grid .stat:nth-child(3n+2) .k { color: var(--gold-text); opacity: 0.75; }
 
+.rec-month { display: flex; align-items: baseline; gap: 8px; font-size: 12px; font-weight: 700; color: var(--muted); margin: 12px 2px 6px; }
+.rec-month-count { font-weight: 400; font-size: 11px; }
 .rec-item { display: flex; gap: 10px; padding: 12px; border-radius: 14px; background: var(--card-soft); align-items: center; margin-bottom: 8px; }
 .rec-item:last-child { margin-bottom: 0; }
 .result-pill {

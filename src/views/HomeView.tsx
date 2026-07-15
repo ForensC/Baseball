@@ -1,10 +1,19 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AttendanceRecord, CollectionItem, Game, ThemeDay } from '../types';
 import { team, teamLogo } from '../data/teams';
 import { computeStats } from '../logic';
 import { daysBetween, formatDateZh, formatMoney, todayISO } from '../utils';
 
 export type Tab = 'home' | 'calendar' | 'records' | 'collection' | 'news';
+
+const WD = '日一二三四五六';
+// 由 ISO 日期加減天數，回傳 YYYY-MM-DD
+function addDays(iso: string, n: number): string {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const DAY_RANGE = 7; // 首頁往前後可滑動的天數上限
 
 interface Props {
   games: Game[];
@@ -55,34 +64,45 @@ function GameRow({ g, action, onAction }: { g: Game; action: string; onAction: (
   );
 }
 
-// 參考 BruceBaseball 的即將出賽大卡：兩側用隊色與 logo、中央 VS、下方先發投手對決
-function BigMatch({ g, countdown }: { g: Game; countdown: string }) {
-  const home = team(g.home);
-  const away = team(g.away);
-  const final = g.status === 'final' && g.homeScore !== null && g.awayScore !== null;
+// 首頁可左右滑動的「當天」大卡：上方日期切換、中央主打比賽、可滑到前後幾天
+function DayHero({ g, dateLabel, relLabel, canPrev, canNext, onPrev, onNext }: {
+  g?: Game; dateLabel: string; relLabel: string; canPrev: boolean; canNext: boolean; onPrev: () => void; onNext: () => void;
+}) {
+  const final = !!g && g.status === 'final' && g.homeScore !== null && g.awayScore !== null;
   return (
     <div className="bigmatch">
-      <div className="bigmatch-top">
-        <span className="bm-status">{countdown}</span>
-        <span className="bm-when">{g.date.slice(5).replace('-', '/')}（{'日一二三四五六'[new Date(g.date + 'T00:00:00').getDay()]}）{g.time} · {g.stadium}</span>
+      <div className="daynav">
+        <button className="daynav-arrow" disabled={!canPrev} onClick={onPrev} aria-label="前一天">‹</button>
+        <div className="daynav-center">
+          <div className="daynav-date">{dateLabel}</div>
+          <div className="daynav-rel">{relLabel}</div>
+        </div>
+        <button className="daynav-arrow" disabled={!canNext} onClick={onNext} aria-label="後一天">›</button>
       </div>
-      <div className="bigmatch-teams">
-        <div className="bm-side">
-          <img className="bm-logo-img" src={teamLogo(g.home)} alt={home.name} />
-          <span className="bm-name">{home.name}</span>
-          <span className="bm-ha">主場</span>
-        </div>
-        <div className="bm-center">{final ? `${g.homeScore} : ${g.awayScore}` : 'VS'}</div>
-        <div className="bm-side">
-          <img className="bm-logo-img" src={teamLogo(g.away)} alt={away.name} />
-          <span className="bm-name">{away.name}</span>
-          <span className="bm-ha">客場</span>
-        </div>
-      </div>
-      {(g.homePitcher || g.awayPitcher) && (
-        <div className="bm-pitchers-line">
-          <span className="ptag ptag-light">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
-        </div>
+      {g ? (
+        <>
+          <div className="bigmatch-teams">
+            <div className="bm-side">
+              <img className="bm-logo-img" src={teamLogo(g.home)} alt={team(g.home).name} />
+              <span className="bm-name">{team(g.home).name}</span>
+              <span className="bm-ha">主場</span>
+            </div>
+            <div className="bm-center">{final ? `${g.homeScore} : ${g.awayScore}` : 'VS'}</div>
+            <div className="bm-side">
+              <img className="bm-logo-img" src={teamLogo(g.away)} alt={team(g.away).name} />
+              <span className="bm-name">{team(g.away).name}</span>
+              <span className="bm-ha">客場</span>
+            </div>
+          </div>
+          <div className="bm-meta">{g.status === 'postponed' ? '延賽' : g.time || '時間未定'} · {g.stadium}</div>
+          {(g.homePitcher || g.awayPitcher) && (
+            <div className="bm-pitchers-line">
+              <span className="ptag ptag-light">先發</span>{g.homePitcher || '未定'} vs {g.awayPitcher || '未定'}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="bm-empty">這天沒有一軍賽事，左右滑動看其他天</div>
       )}
     </div>
   );
@@ -136,22 +156,63 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
   // 主頁只呈現一軍（kindCode A）；二軍在賽程分頁切換檢視
   const firstTeam = useMemo(() => games.filter((g) => g.kindCode === 'A'), [games]);
   const todayGames = useMemo(() => firstTeam.filter((g) => g.date === today), [firstTeam, today]);
-  const nextGameDate = useMemo(() => {
-    if (todayGames.length) return today;
-    return firstTeam.filter((g) => g.date > today).map((g) => g.date).sort()[0] ?? '';
-  }, [firstTeam, today, todayGames]);
-  const showGames = todayGames.length ? todayGames : firstTeam.filter((g) => g.date === nextGameDate);
 
-  const favNext = useMemo(() => {
-    if (!favTeam) return undefined;
-    return firstTeam
-      .filter((g) => g.date >= today && g.status === 'scheduled' && (g.home === favTeam || g.away === favTeam))
-      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
-  }, [firstTeam, favTeam, today]);
-  const favDays = favNext ? daysBetween(today, favNext.date) : null;
-  const favTheme = favNext
-    ? themeDays.find((t) => t.date === favNext.date && (t.team === favNext.home || t.team === favNext.away))
+  // 上方「當天」大卡＋賽事清單：可左右滑動切換日期（前後各 DAY_RANGE 天）
+  // 預設落在今天；若今天沒球且 DAY_RANGE 天內有下一個比賽日，就先跳過去
+  const defaultDate = useMemo(() => {
+    if (todayGames.length) return today;
+    const upcoming = firstTeam
+      .map((g) => g.date)
+      .filter((d) => d > today && daysBetween(today, d) <= DAY_RANGE)
+      .sort()[0];
+    return upcoming ?? today;
+  }, [firstTeam, todayGames, today]);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const userMovedRef = useRef(false);
+  // 賽程資料是非同步載入的：使用者尚未手動滑動前，跟著預設日期走
+  useEffect(() => {
+    if (!userMovedRef.current) setSelectedDate(defaultDate);
+  }, [defaultDate]);
+
+  const selDiff = daysBetween(today, selectedDate);
+  const canPrev = selDiff > -DAY_RANGE;
+  const canNext = selDiff < DAY_RANGE;
+  const move = (n: number) => {
+    const nd = addDays(selectedDate, n);
+    const diff = daysBetween(today, nd);
+    if (diff < -DAY_RANGE || diff > DAY_RANGE) return;
+    userMovedRef.current = true;
+    setSelectedDate(nd);
+  };
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchRef.current;
+    touchRef.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return; // 只認明確的水平滑動
+    move(dx < 0 ? 1 : -1);
+  };
+
+  const dayGames = useMemo(
+    () => firstTeam.filter((g) => g.date === selectedDate).sort((a, b) => (a.time || '').localeCompare(b.time || '')),
+    [firstTeam, selectedDate]
+  );
+  // 主打比賽：有主隊且當天有出賽就用主隊那場，否則當天第一場
+  const marquee = favTeam ? (dayGames.find((g) => g.home === favTeam || g.away === favTeam) ?? dayGames[0]) : dayGames[0];
+  const otherGames = marquee ? dayGames.filter((g) => g.id !== marquee.id) : dayGames;
+  const dayTheme = marquee
+    ? themeDays.find((t) => t.date === selectedDate && (t.team === marquee.home || t.team === marquee.away))
     : undefined;
+  const wd = WD[new Date(selectedDate + 'T00:00:00').getDay()];
+  const dateLabel = `${Number(selectedDate.slice(5, 7))}/${Number(selectedDate.slice(8, 10))}（${wd}）`;
+  const relLabel = selDiff === 0 ? '今天' : selDiff === 1 ? '明天' : selDiff === -1 ? '昨天' : selDiff > 0 ? `${selDiff} 天後` : `${-selDiff} 天前`;
 
   // 我的看球計畫：未來（含今天）的進場紀錄，依日期由近到遠
   const plans = useMemo(
@@ -168,46 +229,44 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
         </div>
       </div>
 
-      {favTeam ? (
-        favNext && (
-          <>
-            <div className="card hero-card bigmatch-card">
-              <CardHead title={`${team(favTeam).short}的下一場`} more="賽程" onMore={() => onNavigate('calendar')} />
-              <BigMatch
-                g={favNext}
-                countdown={favDays === 0 ? '今天開打！' : `還有 ${favDays} 天`}
-              />
+      <div className="day-pager" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="day-pager-content" key={selectedDate}>
+          <div className="card hero-card bigmatch-card">
+            <DayHero
+              g={marquee}
+              dateLabel={dateLabel}
+              relLabel={relLabel}
+              canPrev={canPrev}
+              canNext={canNext}
+              onPrev={() => move(-1)}
+              onNext={() => move(1)}
+            />
+          </div>
+          {marquee && <BigMatchCta onAction={() => onQuickAdd(marquee)} />}
+          {dayTheme && (
+            <div className="theme-banner" style={{ borderColor: dayTheme.team ? team(dayTheme.team).color : 'var(--accent)' }}>
+              <span className="theme-tag" style={{ background: dayTheme.team ? team(dayTheme.team).color : 'var(--accent)', color: dayTheme.team ? team(dayTheme.team).text : '#fff' }}>
+                {dayTheme.team ? team(dayTheme.team).short : '主題日'}
+              </span>
+              <span>🎉 {dayTheme.name}</span>
             </div>
-            <BigMatchCta onAction={() => onQuickAdd(favNext)} />
-            {favTheme && (
-              <div className="theme-banner" style={{ borderColor: favTheme.team ? team(favTheme.team).color : 'var(--accent)' }}>
-                <span className="theme-tag" style={{ background: favTheme.team ? team(favTheme.team).color : 'var(--accent)', color: favTheme.team ? team(favTheme.team).text : '#fff' }}>
-                  {favTheme.team ? team(favTheme.team).short : '主題日'}
-                </span>
-                <span>🎉 {favTheme.name}</span>
-              </div>
-            )}
-          </>
-        )
-      ) : (
-        <div className="card">
-          <CardHead title="設定你的主隊" />
-          <p className="section-note" style={{ marginTop: 0 }}>設定主隊後，主頁會顯示他的下一場比賽與倒數。</p>
-          <button className="btn-ghost" onClick={() => onNavigate('records')}>前往設定 ›</button>
+          )}
+          {otherGames.length > 0 && (
+            <div className="card">
+              <CardHead title="同日其他賽事" more="月曆" onMore={() => onNavigate('calendar')} />
+              {otherGames.map((g) => (
+                <GameRow key={g.id} g={g} action="記進場" onAction={() => onQuickAdd(g)} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="card">
-        <CardHead
-          title={todayGames.length ? '今日賽事' : nextGameDate ? `下一個比賽日 ${nextGameDate.slice(5).replace('-', '/')}` : '賽事'}
-          more="月曆"
-          onMore={() => onNavigate('calendar')}
-        />
-        {showGames.length === 0 && <div className="empty">目前沒有安排中的比賽</div>}
-        {showGames.map((g) => (
-          <GameRow key={g.id} g={g} action="記進場" onAction={() => onQuickAdd(g)} />
-        ))}
       </div>
+
+      {!favTeam && (
+        <button className="btn-ghost" style={{ width: '100%' }} onClick={() => onNavigate('records')}>
+          設定主隊，優先顯示你支持的球隊比賽 ›
+        </button>
+      )}
 
       <div className="card">
         <CardHead title="我的看球計畫" more="全部" onMore={() => onNavigate('records')} />

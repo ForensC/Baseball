@@ -177,6 +177,28 @@ body {
 
 .bigmatch-card.card { padding-bottom: 40px; margin-bottom: 0; }
 .bigmatch { color: #fff; }
+
+/* 首頁「當天」大卡的日期切換列與滑動 */
+.day-pager { touch-action: pan-y; }
+@keyframes day-fade { from { opacity: 0.35; } to { opacity: 1; } }
+.day-pager-content { animation: day-fade 0.18s ease; }
+.daynav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.daynav-arrow {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 18px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.daynav-arrow:disabled { opacity: 0.3; cursor: default; }
+.daynav-center { flex: 1; text-align: center; }
+.daynav-date { font-size: 15px; font-weight: 800; color: #fff; }
+.daynav-rel { font-size: 12px; color: #cfe4d8; margin-top: 1px; }
+.bm-meta { text-align: center; color: #cfe4d8; font-size: 12px; margin-top: 14px; }
+.bm-empty { text-align: center; color: #cfe4d8; font-size: 14px; padding: 22px 0 6px; }
 .bigmatch-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .bm-status { background: var(--gold); color: var(--gold-text); font-weight: 800; font-size: 13px; padding: 6px 14px; border-radius: 999px; }
 .bm-when { color: #cfe4d8; font-size: 12px; font-weight: 600; }

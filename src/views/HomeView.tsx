@@ -206,7 +206,6 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
   );
   // 主打比賽：有主隊且當天有出賽就用主隊那場，否則當天第一場
   const marquee = favTeam ? (dayGames.find((g) => g.home === favTeam || g.away === favTeam) ?? dayGames[0]) : dayGames[0];
-  const otherGames = marquee ? dayGames.filter((g) => g.id !== marquee.id) : dayGames;
   const dayTheme = marquee
     ? themeDays.find((t) => t.date === selectedDate && (t.team === marquee.home || t.team === marquee.away))
     : undefined;
@@ -251,10 +250,10 @@ export default function HomeView({ games, gamesById, themeDays, records, items, 
               <span>🎉 {dayTheme.name}</span>
             </div>
           )}
-          {otherGames.length > 0 && (
+          {dayGames.length > 0 && (
             <div className="card">
-              <CardHead title="同日其他賽事" more="月曆" onMore={() => onNavigate('calendar')} />
-              {otherGames.map((g) => (
+              <CardHead title={`當天賽事（${dayGames.length}）`} more="月曆" onMore={() => onNavigate('calendar')} />
+              {dayGames.map((g) => (
                 <GameRow key={g.id} g={g} action="記進場" onAction={() => onQuickAdd(g)} />
               ))}
             </div>

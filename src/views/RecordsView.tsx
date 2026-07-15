@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { AttendanceRecord, Game, RecordResult } from '../types';
 import { TEAMS, team } from '../data/teams';
 import { computeStats, deriveResult } from '../logic';
@@ -33,6 +33,19 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
   const today = todayISO();
   const stats = computeStats(records, gamesById);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 進場紀錄依年份篩選，一次只顯示一年，避免紀錄變多後列表落落長
+  const years = useMemo(
+    () => Array.from(new Set(records.map((r) => r.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a)),
+    [records]
+  );
+  const [year, setYear] = useState('');
+  // 選定年份若已不存在（資料變動）則退回：優先今年、否則最近一年
+  const activeYear = year && years.includes(year) ? year : (years.includes(today.slice(0, 4)) ? today.slice(0, 4) : years[0]);
+  const shownRecords = useMemo(
+    () => records.filter((r) => r.date.slice(0, 4) === activeYear).sort((a, b) => b.date.localeCompare(a.date)),
+    [records, activeYear]
+  );
 
   const doExport = () => {
     const blob = new Blob([exportBackup()], { type: 'application/json' });
@@ -90,9 +103,23 @@ export default function RecordsView({ records, gamesById, favTeam, onFavTeam, on
       <button className="btn-primary" onClick={onAdd}>＋ 新增進場紀錄</button>
 
       <div className="card">
-        <h2>進場紀錄（{records.length}）</h2>
+        <h2>進場紀錄{years.length ? ` · ${activeYear}` : ''}（{shownRecords.length}）</h2>
+        {years.length > 1 && (
+          <div className="chip-row" style={{ marginBottom: 6 }}>
+            {years.map((y) => (
+              <button
+                key={y}
+                className={`chip ${y === activeYear ? 'active' : ''}`}
+                style={y === activeYear ? { background: 'var(--accent)', color: '#fff' } : undefined}
+                onClick={() => setYear(y)}
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
         {records.length === 0 && <div className="empty">還沒有紀錄，看完球回來記一筆吧！</div>}
-        {records.map((r) => {
+        {shownRecords.map((r) => {
           const res = r.date > today ? 'plan' : deriveResult(r, gamesById);
           const s = RESULT_STYLE[res];
           return (
